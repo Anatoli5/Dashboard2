@@ -1,56 +1,80 @@
+from typing import List
 import streamlit as st
-
-from config.loader import ConfigLoader
-from config.settings import Settings
-from core.data_manager import init_db, update_ticker_data, load_data_for_tickers
-from core.utils import normalize_data, adjust_range_and_interval
-from ui.layout import DashboardLayout
-from ui.sidebar import SidebarControls
-from visualization.charts import ChartManager
-
-
-def main():
-    # Initialize
-    DashboardLayout.setup_page()
-    init_db()
-
-    # Load configuration
-    tickers_df = ConfigLoader.load_tickers(Settings.TICKERS_FILE)
-    ticker_choices = tickers_df['ticker'].tolist()
-    default_tickers = ["AAPL", "BTC-USD"] if all(
-        t in ticker_choices for t in ["AAPL", "BTC-USD"]
-    ) else ticker_choices[:2]
-
-    # Render sidebar controls
-    selected_tickers = SidebarControls.render_ticker_selection(
-        ticker_choices,
-        default_tickers
-    )
-    start_date, end_date = SidebarControls.render_date_controls()
-    interval, log_scale = SidebarControls.render_chart_controls()
-
-    # Process data
-    interval = adjust_range_and_interval(start_date, end_date, interval)
-    update_ticker_data(selected_tickers, interval=interval)
-    data_loaded = load_data_for_tickers(
-        selected_tickers,
-        start_date,
-        end_date,
-        interval=interval
-    )
-
-    # Create and display visualization
-    if 'norm_date' not in st.session_state:
-        st.session_state['norm_date'] = None
-
-    data_normalized = normalize_data(
-        data_loaded,
-        st.session_state['norm_date']
-    )
-
-    fig = ChartManager.create_price_chart(data_normalized, log_scale)
-    DashboardLayout.render_main_area(fig)
+from dashboard.layout import create_dashboard
+from dashboard.visualization import process_and_visualize_data  # Add this import
+from config.settings import MAX_DATE_RANGE_DAYS, TICKERS_CSV_PATH, DATA_PROVIDER
+from database.handler import DatabaseHandler
+from utils.data_processor import DataProcessor
+from providers.yahoo_finance_provider import YahooFinanceProvider
+from providers.alpha_vantage_provider import AlphaVantageProvider
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main function to run the Streamlit app."""
+    st.set_page_config(layout="wide")
+    st.sidebar.title("Controls")
+
+    # Initialize necessary components
+    data_provider = get_data_provider()
+    db_handler = DatabaseHandler(data_provider=data_provider)
+    data_processor = DataProcessor()
+
+    tickers = load_tickers(TICKERS_CSV_PATH)
+
+    # Create dashboard layout and get user inputs
+    user_inputs = create_dashboard(tickers, MAX_DATE_RANGE_DAYS)
+
+    if user_inputs.selected_tickers:
+        # Update and load data
+        try:
+            db_handler.update_ticker_data(
+                user_inputs.selected_tickers,
+                interval=user_inputs.interval,
+                force=user_inputs.refresh_data
+            )
+            data_loaded = db_handler.load_data_for_tickers(
+                user_inputs.selected_tickers,
+                user_inputs.start_date,
+                user_inputs.end_date,
+                interval=user_inputs.interval
+            )
+            # Process and visualize data
+            process_and_visualize_data(
+                data_loaded,
+                user_inputs,
+                data_processor
+            )
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    else:
+        st.warning("Please select at least one ticker to display data.")
+
+
+@st.cache_data
+def load_tickers(file_path: str) -> List[str]:
+    """Loads tickers from a CSV file."""
+    import pandas as pd
+    try:
+        df = pd.read_csv(file_path)
+        if 'ticker' in df.columns:
+            return df['ticker'].tolist()
+        else:
+            raise ValueError("CSV file must contain 'ticker' column.")
+    except Exception as e:
+        st.error(f"Error reading ticker CSV: {e}")
+        st.stop()
+
+
+def get_data_provider():
+    """Returns the data provider instance based on configuration."""
+    if DATA_PROVIDER == 'YahooFinance':
+        return YahooFinanceProvider()
+    elif DATA_PROVIDER == 'AlphaVantage':
+        return AlphaVantageProvider()
+    else:
+        st.error(f"Unsupported data provider: {DATA_PROVIDER}")
+        st.stop()
+
+
+if __name__ == '__main__':
     main()

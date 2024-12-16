@@ -1,5 +1,5 @@
-Ticker,Name
-BTC-USD,Bitcoin
+ticker,name
+BTCUSD,Bitcoin
 ETH-USD,Ethereum
 USDT-USD,Tether
 XRP-USD,XRP

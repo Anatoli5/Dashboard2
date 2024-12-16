@@ -1,0 +1,5 @@
+database_path: 'data/data.db'
+tickers_csv_path: 'data/tickers.csv'
+max_date_range_days: 3650
+data_provider: 'YahooFinance'  # Options: 'YahooFinance', 'AlphaVantage'
+alpha_vantage_api_key: 'NO5ESYP5346E959A'  # Replace with your actual API key
