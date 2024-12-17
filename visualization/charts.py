@@ -1,7 +1,7 @@
 from typing import Dict
-
-import pandas as pd
 import plotly.graph_objects as go
+import pandas as pd
+import streamlit as st
 
 
 class ChartManager:
@@ -21,16 +21,13 @@ class ChartManager:
                     name=ticker
                 ))
 
-        # Determine if data is normalized by checking if values are around 100
-        is_normalized = any(
-            not df.empty and abs(df['close'].iloc[0] - 100) < 90
-            for df in data_normalized.values()
-        )
-
+        # Update layout with improved configuration
         fig.update_layout(
             title="Financial Data",
             xaxis_title="Date",
-            yaxis_title="Normalized Price (%)" if is_normalized else "Price",
+            yaxis_title="Price" + (" (normalized)" if st.session_state.get('norm_date') else ""),
+            hovermode="x unified",
+            template="plotly_dark",
             yaxis_type="log" if log_scale else "linear"
         )
 

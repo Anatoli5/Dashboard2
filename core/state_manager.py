@@ -17,7 +17,8 @@ class StateManager:
             'end_date': st.session_state.get('end_date', '').isoformat() if st.session_state.get('end_date') else None,
             'interval': st.session_state.get('interval', '1d'),
             'log_scale': st.session_state.get('log_scale', False),
-            'norm_date': st.session_state.get('norm_date', '').isoformat() if st.session_state.get('norm_date') else None,
+            'norm_date': st.session_state.get('norm_date', '').isoformat() if st.session_state.get(
+                'norm_date') else None,
             'last_shutdown': datetime.utcnow().isoformat()
         }
 
@@ -46,7 +47,7 @@ class StateManager:
             if state.get('end_date'):
                 st.session_state['end_date'] = datetime.fromisoformat(state['end_date']).date()
             if state.get('norm_date'):
-                st.session_state['norm_date'] = datetime.fromisoformat(state['norm_date']).date()
+                st.session_state['norm_date'] = datetime.fromisoformat(state['norm_date'])
             else:
                 st.session_state['norm_date'] = None
 
