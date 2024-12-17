@@ -43,9 +43,9 @@ class DatabaseManager:
         if interval not in ["1d", "1wk", "1mo"]:
             raise ValueError("Invalid interval. Must be '1d', '1wk', or '1mo'")
 
-        for ticker in tickers:
-            # Create a new engine and connection for each ticker
-            with create_engine(f"sqlite:///{DB_PATH}", echo=False, future=True).connect() as conn:
+        # Use the existing engine instead of creating new ones
+        with self.engine.connect() as conn:
+            for ticker in tickers:
                 try:
                     # Check last update time if not forced
                     if not force:
@@ -82,7 +82,8 @@ class DatabaseManager:
                     )
 
                     # Execute all operations in a single transaction
-                    with conn.begin():
+                    trans = conn.begin()
+                    try:
                         # Delete existing data
                         conn.execute(
                             text("DELETE FROM ticker_data WHERE ticker=:ticker AND interval=:interval"),
@@ -112,6 +113,10 @@ class DatabaseManager:
                             """),
                             {"ticker": ticker, "interval": interval, "last_update": now}
                         )
+                        trans.commit()
+                    except Exception as e:
+                        trans.rollback()
+                        raise e
 
                 except Exception as e:
                     st.error(f"Error processing ticker {ticker}: {str(e)}")

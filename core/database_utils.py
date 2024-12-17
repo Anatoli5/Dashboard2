@@ -28,7 +28,7 @@ def validate_database_structure():
             'last_update': 'TEXT'
         },
         'app_state': {
-            'id': 'INTEGER PRIMARY KEY AUTOINCREMENT',  # Changed this line
+            'id': 'INTEGER PRIMARY KEY',  # Remove AUTOINCREMENT as it's not needed
             'selected_tickers': 'TEXT',
             'start_date': 'TEXT',
             'end_date': 'TEXT',
