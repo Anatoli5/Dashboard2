@@ -16,13 +16,20 @@ from visualization.charts import ChartManager
 def initialize_session_state():
     """Initialize default session state values if not already set"""
     if 'initialized' not in st.session_state:
-        st.session_state['initialized'] = True
-        st.session_state['norm_date'] = None
-        st.session_state['start_date'] = (datetime.now() - timedelta(days=365)).date()
-        st.session_state['end_date'] = datetime.now().date()
-        st.session_state['interval'] = '1d'
-        st.session_state['log_scale'] = False
-        st.session_state['selected_tickers'] = []
+        default_values = {
+            'initialized': True,
+            'norm_date': None,
+            'start_date': (datetime.now() - timedelta(days=365)).date(),
+            'end_date': datetime.now().date(),
+            'interval': '1d',
+            'log_scale': False,
+            'selected_tickers': []
+        }
+
+        # Only set values that aren't already in session_state
+        for key, value in default_values.items():
+            if key not in st.session_state:
+                st.session_state[key] = value
 
 
 def main():
