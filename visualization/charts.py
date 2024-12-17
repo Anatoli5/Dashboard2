@@ -1,6 +1,7 @@
 from typing import Dict
 import plotly.graph_objects as go
 import pandas as pd
+from plotly.graph_objs import Figure
 
 
 class ChartManager:
@@ -9,7 +10,7 @@ class ChartManager:
             data_normalized: Dict[str, pd.DataFrame],
             log_scale: bool = False
     ) -> go.Figure:
-        fig = go.Figure()
+        fig: Figure = go.Figure()
 
         for ticker, ticker_df in data_normalized.items():
             if not ticker_df.empty:

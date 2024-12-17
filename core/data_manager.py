@@ -43,13 +43,13 @@ class DatabaseManager:
         if interval not in ["1d", "1wk", "1mo"]:
             raise ValueError("Invalid interval. Must be '1d', '1wk', or '1mo'")
 
-        # Use the existing engine instead of creating new ones
-        with self.engine.connect() as conn:
+        # Single connection for all operations
+        with self.engine.begin() as connection:
             for ticker in tickers:
                 try:
                     # Check last update time if not forced
                     if not force:
-                        result = conn.execute(
+                        result = connection.execute(
                             text("SELECT last_update FROM metadata WHERE ticker=:ticker AND interval=:interval"),
                             {"ticker": ticker, "interval": interval}
                         )
@@ -81,42 +81,35 @@ class DatabaseManager:
                         lambda x: x.isoformat() if hasattr(x, 'isoformat') else str(x)
                     )
 
-                    # Execute all operations in a single transaction
-                    trans = conn.begin()
-                    try:
-                        # Delete existing data
-                        conn.execute(
-                            text("DELETE FROM ticker_data WHERE ticker=:ticker AND interval=:interval"),
-                            {"ticker": ticker, "interval": interval}
-                        )
+                    # Delete existing data
+                    connection.execute(
+                        text("DELETE FROM ticker_data WHERE ticker=:ticker AND interval=:interval"),
+                        {"ticker": ticker, "interval": interval}
+                    )
 
-                        # Insert new data in chunks
-                        chunk_size = 500
-                        records = df_to_insert.to_dict(orient='records')
-                        for i in range(0, len(records), chunk_size):
-                            chunk = records[i:i + chunk_size]
-                            conn.execute(
-                                text("""
-                                    INSERT INTO ticker_data 
-                                    (ticker, date, open, high, low, close, volume, interval)
-                                    VALUES 
-                                    (:ticker, :date, :open, :high, :low, :close, :volume, :interval)
-                                """),
-                                chunk
-                            )
-
-                        # Update metadata
-                        conn.execute(
+                    # Insert new data in chunks
+                    chunk_size = 500
+                    records = df_to_insert.to_dict(orient='records')
+                    for i in range(0, len(records), chunk_size):
+                        chunk = records[i:i + chunk_size]
+                        connection.execute(
                             text("""
-                                INSERT OR REPLACE INTO metadata (ticker, interval, last_update)
-                                VALUES (:ticker, :interval, :last_update)
+                                INSERT INTO ticker_data 
+                                (ticker, date, open, high, low, close, volume, interval)
+                                VALUES 
+                                (:ticker, :date, :open, :high, :low, :close, :volume, :interval)
                             """),
-                            {"ticker": ticker, "interval": interval, "last_update": now}
+                            chunk
                         )
-                        trans.commit()
-                    except Exception as e:
-                        trans.rollback()
-                        raise e
+
+                    # Update metadata
+                    connection.execute(
+                        text("""
+                            INSERT OR REPLACE INTO metadata (ticker, interval, last_update)
+                            VALUES (:ticker, :interval, :last_update)
+                        """),
+                        {"ticker": ticker, "interval": interval, "last_update": now}
+                    )
 
                 except Exception as e:
                     st.error(f"Error processing ticker {ticker}: {str(e)}")

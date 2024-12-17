@@ -28,7 +28,7 @@ def validate_database_structure():
             'last_update': 'TEXT'
         },
         'app_state': {
-            'id': 'INTEGER PRIMARY KEY',  # Remove AUTOINCREMENT as it's not needed
+            'id': 'INTEGER',  # Changed from 'INTEGER PRIMARY KEY AUTOINCREMENT'
             'selected_tickers': 'TEXT',
             'start_date': 'TEXT',
             'end_date': 'TEXT',
@@ -100,68 +100,100 @@ def validate_database_structure():
 
 def create_table(conn, table_name, columns):
     """Create a new table with the specified columns"""
-    columns_def = ", ".join([f"{name} {type_}" for name, type_ in columns.items()])
-    if table_name == 'ticker_data':
-        columns_def += ", PRIMARY KEY (ticker, date, interval)"
-    conn.execute(f"CREATE TABLE {table_name} ({columns_def})")
+    if table_name == 'app_state':
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS app_state (
+                id INTEGER PRIMARY KEY,
+                selected_tickers TEXT,
+                start_date TEXT,
+                end_date TEXT,
+                interval TEXT,
+                log_scale INTEGER,
+                norm_date TEXT,
+                last_modified TEXT
+            )
+        """)
+    elif table_name == 'ticker_data':
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ticker_data (
+                ticker TEXT,
+                date TEXT,
+                open REAL,
+                high REAL,
+                low REAL,
+                close REAL,
+                volume REAL,
+                interval TEXT,
+                PRIMARY KEY (ticker, date, interval)
+            )
+        """)
+    elif table_name == 'metadata':
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS metadata (
+                ticker TEXT,
+                interval TEXT,
+                last_update TEXT,
+                PRIMARY KEY (ticker, interval)
+            )
+        """)
+    else:
+        # For any other tables, use the dynamic column definition
+        columns_def = ", ".join([f"{name} {type_}" for name, type_ in columns.items()])
+        conn.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({columns_def})")
 
 
 def fix_column_type(conn, table_name, column_name, correct_type):
     """Fix column type by creating a new table with correct structure"""
     cursor = conn.cursor()
+
     try:
-        # First check and clean up any existing _old tables
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (f"{table_name}_old",))
-        if cursor.fetchone():
-            cursor.execute(f"DROP TABLE {table_name}_old")
-            conn.commit()
+        # Get all column info
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        columns = cursor.fetchall()
 
-        # Get the table creation SQL with primary key definition
-        cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-        create_sql = cursor.fetchone()[0]
+        # Create new table name
+        temp_table = f"{table_name}_new"
 
-        # Extract primary key definition if it exists
-        pk_definition = ""
-        if "PRIMARY KEY" in create_sql:
-            pk_definition = create_sql[create_sql.find("PRIMARY KEY"):].split(")")[0] + ")"
+        # Build create statement
+        if table_name == 'app_state':
+            create_stmt = """
+                CREATE TABLE {} (
+                    id INTEGER PRIMARY KEY,
+                    selected_tickers TEXT,
+                    start_date TEXT,
+                    end_date TEXT,
+                    interval TEXT,
+                    log_scale INTEGER,
+                    norm_date TEXT,
+                    last_modified TEXT
+                )
+            """.format(temp_table)
+        else:
+            cols = []
+            for col in columns:
+                name = col[1]
+                type_ = correct_type if name == column_name else col[2]
+                cols.append(f"{name} {type_}")
+            create_stmt = f"CREATE TABLE {temp_table} ({', '.join(cols)})"
 
-        # Rename existing table
-        cursor.execute(f"ALTER TABLE {table_name} RENAME TO {table_name}_old")
-
-        # Get column info
-        cursor.execute(f"PRAGMA table_info({table_name}_old)")
-        columns = [(row[1], row[2]) for row in cursor.fetchall()]
-
-        # Create new table with correct column types
-        columns_def = ", ".join([
-            f"{col} {correct_type if col == column_name else col_type}"
-            for col, col_type in columns
-        ])
-
-        if pk_definition:
-            columns_def += f", {pk_definition}"
-
-        cursor.execute(f"CREATE TABLE {table_name} ({columns_def})")
+        # Execute create
+        cursor.execute(create_stmt)
 
         # Copy data
-        columns_str = ", ".join(col[0] for col in columns)
-        cursor.execute(f"INSERT INTO {table_name} SELECT {columns_str} FROM {table_name}_old")
+        cursor.execute(f"INSERT INTO {temp_table} SELECT * FROM {table_name}")
 
         # Drop old table
-        cursor.execute(f"DROP TABLE {table_name}_old")
+        cursor.execute(f"DROP TABLE {table_name}")
+
+        # Rename new table
+        cursor.execute(f"ALTER TABLE {temp_table} RENAME TO {table_name}")
+
         conn.commit()
         return True
 
     except sqlite3.Error as e:
         st.error(f"Error fixing column type: {str(e)}")
-        try:
-            # Cleanup on error
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-            if not cursor.fetchone():  # If new table wasn't created successfully
-                cursor.execute(f"ALTER TABLE {table_name}_old RENAME TO {table_name}")
-            conn.commit()
-        except sqlite3.Error as cleanup_error:
-            st.error(f"Error during cleanup: {str(cleanup_error)}")
+        conn.rollback()
         return False
 
 
