@@ -1,6 +1,6 @@
-from typing import List, Tuple
-from datetime import datetime, timedelta
 import streamlit as st
+from datetime import datetime
+from typing import List, Tuple
 
 
 class SidebarControls:
@@ -13,26 +13,29 @@ class SidebarControls:
         return st.sidebar.multiselect(
             "Select Tickers",
             options=ticker_choices,
-            default=default_tickers
+            default=default_tickers,
+            key="ticker_selector"
         )
 
     @staticmethod
-    def render_date_controls() -> Tuple[datetime, datetime]:
-        start_date = st.sidebar.date_input(
-            "Start Date",
-            datetime.now() - timedelta(days=365)
+    def render_date_input(label: str, default_value: datetime) -> datetime:
+        return st.sidebar.date_input(
+            label,
+            value=default_value
         )
-        end_date = st.sidebar.date_input(
-            "End Date",
-            datetime.now()
-        )
-        return start_date, end_date
 
     @staticmethod
-    def render_chart_controls() -> Tuple[str, bool]:
+    def render_chart_controls(
+            default_interval: str = "1d",
+            default_log_scale: bool = False
+    ) -> Tuple[str, bool]:
         interval = st.sidebar.selectbox(
             "Interval",
-            ["1d", "1wk", "1mo"]
+            ["1d", "1wk", "1mo"],
+            index=["1d", "1wk", "1mo"].index(default_interval)
         )
-        log_scale = st.sidebar.checkbox("Log Scale", False)
+        log_scale = st.sidebar.checkbox(
+            "Log Scale",
+            value=default_log_scale
+        )
         return interval, log_scale
