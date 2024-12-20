@@ -1,21 +1,21 @@
+# File: core/utils.py
+
 import pandas as pd
+from datetime import datetime
 import streamlit as st
+from typing import Dict
 
 
-def normalize_data(data_dict, reference_date):
+def normalize_data(data_dict: Dict[str, pd.DataFrame], reference_date) -> Dict[str, pd.DataFrame]:
     """Normalize price data relative to a reference date"""
     if reference_date is None:
         return data_dict
 
     normalized = {}
     try:
-        # Convert reference_date to pandas datetime using proper type checking
+        # Ensure reference_date is pandas Timestamp
         if not isinstance(reference_date, pd.Timestamp):
-            try:
-                reference_date = pd.to_datetime(reference_date)
-            except Exception as e:
-                st.error(f"Invalid reference date format: {str(e)}")
-                return data_dict
+            reference_date = pd.to_datetime(reference_date)
 
         for ticker, ticker_df in data_dict.items():
             if ticker_df.empty:
@@ -29,9 +29,17 @@ def normalize_data(data_dict, reference_date):
             if reference_date in ticker_df.index:
                 ref_price = ticker_df.loc[reference_date, 'close']
             else:
-                # Get the closest date
-                closest_date = ticker_df.index[ticker_df.index.searchsorted(reference_date)]
-                ref_price = ticker_df.loc[closest_date, 'close']
+                pos = ticker_df.index.searchsorted(reference_date)
+                if pos == 0:
+                    closest_index = 0
+                elif pos == len(ticker_df):
+                    closest_index = len(ticker_df) - 1
+                else:
+                    before = ticker_df.index[pos - 1]
+                    after = ticker_df.index[pos]
+                    closest_index = pos if after - reference_date < reference_date - before else pos - 1
+
+                ref_price = ticker_df.iloc[closest_index]['close']
 
             # Create normalized DataFrame
             norm_df = ticker_df.copy()
@@ -45,11 +53,13 @@ def normalize_data(data_dict, reference_date):
     return normalized
 
 
-def adjust_range_and_interval(start_date, end_date, interval):
+def adjust_range_and_interval(start_date: datetime, end_date: datetime, interval: str) -> str:
+    """Adjust interval based on date range"""
     date_diff = (end_date - start_date).days
-    # Basic logic: if too large for daily, switch to weekly
+
     if interval == "1d" and date_diff > 1825:  # > 5 years
         interval = "1wk"
-    elif interval == "1wk" and date_diff < 90:
+    elif interval == "1wk" and date_diff < 90:  # < 3 months
         interval = "1d"
+
     return interval
