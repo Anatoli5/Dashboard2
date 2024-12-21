@@ -7,8 +7,6 @@ from sqlalchemy import create_engine, text
 import streamlit as st
 from typing import Dict, List
 from core.database_utils import DB_PATH
-from typing import Dict, List
-from core.database_utils import DB_PATH
 
 
 class DatabaseManager:
@@ -19,9 +17,6 @@ class DatabaseManager:
     def validate_db(self) -> None:
         """Ensure database is properly initialized"""
         from core.database_utils import validate_database_structure
-    def validate_db(self) -> None:
-        """Ensure database is properly initialized"""
-        from core.database_utils import validate_database_structure
         if not validate_database_structure():
             st.error("Database validation failed")
             raise Exception("Database validation failed")
@@ -29,11 +24,8 @@ class DatabaseManager:
     @staticmethod
     def fetch_from_yahoo(ticker: str, interval: str = "1d", period: str = "max") -> pd.DataFrame:
         """Fetch data from Yahoo Finance"""
-        """Fetch data from Yahoo Finance"""
         try:
             return yf.download(ticker, period=period, interval=interval, auto_adjust=True, progress=False)
-        except Exception as e:
-            st.error(f"Error fetching data for {ticker}: {str(e)}")
         except Exception as e:
             st.error(f"Error fetching data for {ticker}: {str(e)}")
             return pd.DataFrame()
@@ -100,11 +92,6 @@ class DatabaseManager:
                     continue
 
     def load_data_for_tickers(
-            self,
-            tickers: List[str],
-            start_date: datetime,
-            end_date: datetime,
-            interval: str = "1d"
             self,
             tickers: List[str],
             start_date: datetime,
