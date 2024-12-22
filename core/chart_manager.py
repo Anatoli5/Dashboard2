@@ -20,22 +20,16 @@ class ChartManager:
 
     # Chart configuration
     CHART_CONFIG = {
-        'displayModeBar': True,
-        'displaylogo': False,
-        'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
-        'toImageButtonOptions': {
-            'format': 'png',
-            'filename': 'chart',
-            'height': 600,
-            'width': 1200,
-            'scale': 2
-        },
-        'responsive': True,
-        'scrollZoom': True,
-        'doubleClick': 'reset+autosize',  # Reset zoom on double click
-        'showTips': True,  # Show tips in the mode bar
-        'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],  # Add drawing tools
-        'displayModeBar': 'hover'  # Only show mode bar on hover
+        'displayModeBar': True,       # Show the mode bar
+        'displaylogo': False,         # Hide Plotly logo
+        'modeBarButtonsToRemove': [   # Remove unnecessary buttons
+            'select2d', 
+            'lasso2d',
+            'autoScale2d'
+        ],
+        'doubleClick': 'reset+autosize',  # Double click to reset view
+        'showTips': True,             # Show tips when hovering over mode bar buttons
+        'responsive': True            # Make chart responsive to window size
     }
 
     @staticmethod
@@ -135,7 +129,10 @@ class ChartManager:
                 rangeslider=dict(visible=False),
                 showline=True,
                 mirror=True,
-                zeroline=False
+                zeroline=False,
+                showspikes=True,          # Show spikes for better hover experience
+                spikecolor=colors['grid_color'],
+                spikethickness=1
             ),
             yaxis=dict(
                 showgrid=True,
@@ -149,7 +146,10 @@ class ChartManager:
                 type='log' if log_scale else 'linear',
                 showline=True,
                 mirror=True,
-                zeroline=False
+                zeroline=False,
+                showspikes=True,          # Show spikes for better hover experience
+                spikecolor=colors['grid_color'],
+                spikethickness=1
             ),
             hovermode='x unified',
             hoverlabel=dict(
@@ -158,8 +158,17 @@ class ChartManager:
                 bordercolor=colors['line_color']
             ),
             height=600,
-            dragmode='pan'  # Enable panning by default
+            dragmode='zoom',              # Use box zoom as primary zoom method
+            modebar=dict(
+                bgcolor='rgba(0,0,0,0)',
+                color=colors['text_color'],
+                activecolor=colors['text_color']
+            )
         )
+
+        # Configure axes zoom
+        fig.update_xaxes(fixedrange=False)  # Enable x-axis zoom
+        fig.update_yaxes(fixedrange=False)  # Enable y-axis zoom
 
         # Add watermark
         if not st.session_state.get('norm_date'):
