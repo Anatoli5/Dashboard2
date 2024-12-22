@@ -89,10 +89,11 @@ class ChartManager:
                         color=color,
                         width=2.5
                     ),
-                    customdata=[[ticker]]*len(ticker_df),
+                    customdata=[[ticker, x] for x in ticker_df.index],  # Include both ticker and date
                     hovertemplate="<b>%{customdata[0]}</b><br>" +
                                 "Date: %{x}<br>" +
-                                "Price: %{y:.2f}<extra></extra>"
+                                "Price: %{y:.2f}<br>" +
+                                "<extra>Click to normalize</extra>"
                 ))
 
         # Update layout with theme-specific configuration
@@ -157,7 +158,8 @@ class ChartManager:
                 font=dict(color=colors['text_color']),
                 bordercolor=colors['line_color']
             ),
-            height=600
+            height=600,
+            dragmode='pan'  # Enable panning by default
         )
 
         # Add watermark

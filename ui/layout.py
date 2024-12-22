@@ -100,19 +100,29 @@ class DashboardLayout:
         """Render the main chart area"""
         # Create a container for the chart
         with st.container():
-            # Display the chart with Streamlit's native plotly_chart
-            st.plotly_chart(
+            # Use plotly_events to capture clicks
+            clicked_points = plotly_events(
                 fig,
-                use_container_width=True,
-                config={
-                    'displayModeBar': True,
-                    'displaylogo': False,
-                    'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
-                    'scrollZoom': True,
-                    'responsive': True
-                }
+                click_event=True,
+                hover_event=False,
+                select_event=False,
+                key="plot_events",
+                override_height=600,
+                override_width="100%"
             )
             
+            # Handle click events
+            if clicked_points:
+                try:
+                    clicked_date = pd.to_datetime(clicked_points[0].get('x'))
+                    if st.session_state.norm_date != clicked_date:
+                        st.session_state.norm_date = clicked_date
+                        st.session_state.needs_rerun = True
+                        st.session_state.data_cache = {}  # Clear cache to ensure fresh normalization
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to parse clicked date: {e}")
+
             # Display normalization reference date if set
             norm_date = st.session_state.get('norm_date')
             if norm_date is not None:  # Check explicitly for None
