@@ -104,47 +104,15 @@ class DashboardLayout:
             st.plotly_chart(
                 fig,
                 use_container_width=True,
-                config=ChartManager.CHART_CONFIG
+                config={
+                    'displayModeBar': True,
+                    'displaylogo': False,
+                    'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+                    'scrollZoom': True,
+                    'responsive': True
+                }
             )
             
-            # Create an invisible events layer that matches the main chart
-            events_fig = go.Figure(fig)  # Create a copy for events
-            events_fig.update_layout(
-                # Make it transparent but keep the same size
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                showlegend=False,
-                margin=dict(l=0, r=0, t=0, b=0, pad=0),
-                yaxis=dict(visible=False),
-                xaxis=dict(visible=False),
-                annotations=[],  # Remove any annotations
-                height=600  # Match the main chart height
-            )
-            
-            # Capture events with plotly_events
-            clicked_points = plotly_events(
-                events_fig,
-                click_event=True,
-                hover_event=False,
-                select_event=False,
-                key="plot_events",
-                override_height=600,  # Match the main chart height
-                override_width="100%"
-            )
-            
-            if clicked_points:
-                event = clicked_points[0]
-                clicked_date_str = event.get('x')
-                try:
-                    clicked_date = pd.to_datetime(clicked_date_str)
-                    if st.session_state.norm_date != clicked_date:
-                        st.session_state.norm_date = clicked_date
-                        st.session_state.needs_rerun = True
-                        st.session_state.data_cache = {}  # Clear cache to ensure fresh normalization
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Failed to parse clicked date: {e}")
-
             # Display normalization reference date if set
             norm_date = st.session_state.get('norm_date')
             if norm_date is not None:  # Check explicitly for None

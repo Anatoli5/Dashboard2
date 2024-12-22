@@ -22,7 +22,7 @@ class ChartManager:
     CHART_CONFIG = {
         'displayModeBar': True,
         'displaylogo': False,
-        'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
         'toImageButtonOptions': {
             'format': 'png',
             'filename': 'chart',
@@ -31,7 +31,11 @@ class ChartManager:
             'scale': 2
         },
         'responsive': True,
-        'scrollZoom': True
+        'scrollZoom': True,
+        'doubleClick': 'reset+autosize',  # Reset zoom on double click
+        'showTips': True,  # Show tips in the mode bar
+        'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],  # Add drawing tools
+        'displayModeBar': 'hover'  # Only show mode bar on hover
     }
 
     @staticmethod
@@ -131,10 +135,7 @@ class ChartManager:
                 rangeslider=dict(visible=False),
                 showline=True,
                 mirror=True,
-                zeroline=False,
-                showspikes=True,
-                spikecolor=colors['grid_color'],
-                spikethickness=1
+                zeroline=False
             ),
             yaxis=dict(
                 showgrid=True,
@@ -148,10 +149,7 @@ class ChartManager:
                 type='log' if log_scale else 'linear',
                 showline=True,
                 mirror=True,
-                zeroline=False,
-                showspikes=True,
-                spikecolor=colors['grid_color'],
-                spikethickness=1
+                zeroline=False
             ),
             hovermode='x unified',
             hoverlabel=dict(
@@ -159,16 +157,7 @@ class ChartManager:
                 font=dict(color=colors['text_color']),
                 bordercolor=colors['line_color']
             ),
-            autosize=True,
-            height=600,
-            width=None,
-            modebar=dict(
-                bgcolor='rgba(0,0,0,0)',
-                color=colors['text_color'],
-                activecolor=colors['text_color']
-            ),
-            dragmode='pan',
-            uirevision=True  # Preserve UI state between updates
+            height=600
         )
 
         # Add watermark
@@ -184,12 +173,5 @@ class ChartManager:
                 textangle=0,
                 opacity=0.1
             )
-
-        # Set the figure configuration and ensure proper sizing
-        fig.update_layout(
-            config=ChartManager.CHART_CONFIG,
-            autosize=True,
-            margin={"l": 10, "r": 10, "t": 50, "b": 10, "pad": 0}
-        )
 
         return fig
