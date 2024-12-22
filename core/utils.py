@@ -41,9 +41,9 @@ def normalize_data(data_dict: Dict[str, pd.DataFrame], reference_date) -> Dict[s
 
                 ref_price = ticker_df.iloc[closest_index]['close']
 
-            # Create normalized DataFrame
+            # Create normalized DataFrame with simple ratio normalization (no *100)
             norm_df = ticker_df.copy()
-            norm_df['close'] = (norm_df['close'] / ref_price) * 100  # Convert to percentage
+            norm_df['close'] = norm_df['close'] / ref_price
             normalized[ticker] = norm_df
 
     except Exception as e:
@@ -51,7 +51,6 @@ def normalize_data(data_dict: Dict[str, pd.DataFrame], reference_date) -> Dict[s
         return data_dict
 
     return normalized
-
 
 def adjust_range_and_interval(start_date: datetime, end_date: datetime, interval: str) -> str:
     """Adjust interval based on date range"""

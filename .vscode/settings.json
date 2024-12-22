@@ -1,0 +1,6 @@
+{
+    "python.pythonPath": "C:\\Users\\ramsp\\anaconda3\\envs\\Dashboard\\python.exe",
+    // "python.terminal.activateEnvironment": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.diagnosticMode": "workspace"
+}
