@@ -93,39 +93,68 @@ class AlphaVantageProvider(DataProvider):
                     time.sleep(delay)
                     st.info(f"Retrying {ticker} (attempt {attempt + 1}/{max_retries})...")
 
-                params = {
-                    "function": function,
-                    "symbol": ticker,
-                    "apikey": self.api_key,
-                    "outputsize": "full"
-                }
+                # Check if it's a crypto ticker
+                is_crypto = ticker.endswith('USD') and any(c in ticker for c in ['BTC', 'ETH', 'ADA', 'SOL', 'XRP', 'DOGE', 'DOT', 'MATIC', 'LINK', 'UNI'])
+                
+                if is_crypto:
+                    params = {
+                        'function': 'DIGITAL_CURRENCY_DAILY',
+                        'symbol': ticker[:-3],  # Remove USD suffix
+                        'market': 'USD',
+                        'apikey': self.api_key
+                    }
+                else:
+                    params = {
+                        'function': function,
+                        'symbol': ticker,
+                        'apikey': self.api_key,
+                        'outputsize': 'full'
+                    }
                 
                 response = requests.get(self.base_url, params=params, timeout=10)
                 response.raise_for_status()
                 data = response.json()
                 
-                # Get the appropriate time series key
-                time_series_key = f"Time Series ({output_size})"
-                if time_series_key not in data:
-                    st.warning(f"No data received for {ticker}")
-                    continue
+                # Handle different response formats for crypto vs stocks
+                if is_crypto:
+                    time_series_key = 'Time Series (Digital Currency Daily)'
+                    if time_series_key not in data:
+                        st.warning(f"No data received for {ticker}")
+                        continue
+                    
+                    # Convert crypto data format
+                    raw_data = data[time_series_key]
+                    df = pd.DataFrame.from_dict(raw_data, orient='index')
+                    
+                    # Rename crypto-specific columns
+                    column_mapping = {
+                        '1a. open (USD)': 'Open',
+                        '2a. high (USD)': 'High',
+                        '3a. low (USD)': 'Low',
+                        '4a. close (USD)': 'Close',
+                        '5. volume': 'Volume'
+                    }
+                else:
+                    time_series_key = f"Time Series ({output_size})"
+                    if time_series_key not in data:
+                        st.warning(f"No data received for {ticker}")
+                        continue
+                    
+                    # Convert stock data format
+                    df = pd.DataFrame.from_dict(data[time_series_key], orient='index')
+                    
+                    # Rename stock columns
+                    column_mapping = {
+                        '1. open': 'Open',
+                        '2. high': 'High',
+                        '3. low': 'Low',
+                        '4. close': 'Close',
+                        '5. volume': 'Volume'
+                    }
                 
-                # Convert to DataFrame
-                df = pd.DataFrame.from_dict(data[time_series_key], orient='index')
-                
-                # Rename columns to match Yahoo Finance format
-                column_mapping = {
-                    '1. open': 'Open',
-                    '2. high': 'High',
-                    '3. low': 'Low',
-                    '4. close': 'Close',
-                    '5. adjusted close': 'Adj Close',
-                    '6. volume': 'Volume'
-                }
+                # Rename columns and convert to numeric
                 df = df.rename(columns=column_mapping)
-                
-                # Convert string values to float
-                for col in ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']:
+                for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
                     if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors='coerce')
                 

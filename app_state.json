@@ -1,1 +1,1 @@
-{"selected_tickers": ["BTC-USD", "ETH-USD", "SOL-USD", "ADA-USD", "TRX-USD"], "start_date": "2022-12-01", "end_date": "2024-12-17", "interval": "1d", "log_scale": true, "norm_date": "2024-06-14T00:00:00", "last_shutdown": "2024-12-22T01:18:54.498441"}
+{"selected_tickers": [], "start_date": "2023-12-22", "end_date": "2024-12-21", "interval": "1d", "log_scale": true, "norm_date": "2024-12-20T00:00:00", "last_shutdown": "2024-12-22T03:33:08.618603"}

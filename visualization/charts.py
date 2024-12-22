@@ -8,7 +8,8 @@ class ChartManager:
     @staticmethod
     def create_price_chart(
             data_normalized: Dict[str, pd.DataFrame],
-            log_scale: bool = False
+            log_scale: bool = False,
+            theme: str = "dark"
     ) -> go.Figure:
         fig = go.Figure()
 
@@ -27,7 +28,7 @@ class ChartManager:
             xaxis_title="Date",
             yaxis_title="Price" + (" (normalized)" if st.session_state.get('norm_date') else ""),
             hovermode="x unified",
-            template="plotly_dark",
+            template=f"plotly_{theme}",
             yaxis_type="log" if log_scale else "linear"
         )
 
