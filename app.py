@@ -231,7 +231,7 @@ def main():
                         click_event=True,
                         hover_event=False,
                         select_event=False,
-                        key="plot"
+                        key="plot_events"
                     )
 
                     if clicked_points:
