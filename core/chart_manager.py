@@ -76,11 +76,11 @@ class ChartManager:
         # Create figure with appropriate template
         fig = go.Figure()
 
-        # Add traces with custom colors
+        # Add traces with custom colors using WebGL
         for i, (ticker, ticker_df) in enumerate(data_normalized.items()):
             if not ticker_df.empty:
                 color = ChartManager.COLORS[i % len(ChartManager.COLORS)]
-                fig.add_trace(go.Scatter(
+                fig.add_trace(go.Scattergl(  # Using Scattergl instead of Scatter
                     x=ticker_df.index,
                     y=ticker_df['close'],
                     mode='lines',
@@ -89,11 +89,10 @@ class ChartManager:
                         color=color,
                         width=2.5
                     ),
-                    customdata=[[ticker, x] for x in ticker_df.index],  # Include both ticker and date
+                    customdata=[[ticker]]*len(ticker_df),
                     hovertemplate="<b>%{customdata[0]}</b><br>" +
                                 "Date: %{x}<br>" +
-                                "Price: %{y:.2f}<br>" +
-                                "<extra>Click to normalize</extra>"
+                                "Price: %{y:.2f}<extra></extra>"
                 ))
 
         # Update layout with theme-specific configuration
