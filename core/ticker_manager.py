@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 import streamlit as st
 from core.settings_manager import SettingsManager
+from core.state_manager import StateManager
 
 class TickerManager:
     """Manages ticker lists and mappings for different data providers"""
@@ -38,11 +39,32 @@ class TickerManager:
     def initialize():
         """Initialize ticker state"""
         if 'ticker_state' not in st.session_state:
+            # Try to load from saved state first
+            saved_tickers = []
+            try:
+                saved_state = StateManager.load_state()
+                if isinstance(saved_state, dict) and 'selected_tickers' in saved_state:
+                    saved_tickers = saved_state['selected_tickers']
+            except Exception:
+                pass
+
             st.session_state.ticker_state = {
-                'selected_tickers': [],
+                'selected_tickers': saved_tickers,
                 'provider_tickers': {},
                 'last_provider': None
             }
+
+    @staticmethod
+    def save_state():
+        """Save ticker state"""
+        if 'ticker_state' in st.session_state:
+            try:
+                state_data = {
+                    'selected_tickers': st.session_state.ticker_state['selected_tickers']
+                }
+                StateManager.save_state(state_data)
+            except Exception as e:
+                st.warning(f"Failed to save ticker state: {str(e)}")
 
     @staticmethod
     def get_available_tickers(provider: Optional[str] = None) -> List[str]:
@@ -75,13 +97,14 @@ class TickerManager:
     def get_selected_tickers() -> List[str]:
         """Get currently selected tickers"""
         TickerManager.initialize()
-        return st.session_state.ticker_state['selected_tickers']
+        return st.session_state.ticker_state.get('selected_tickers', [])
 
     @staticmethod
     def set_selected_tickers(tickers: List[str]):
-        """Set selected tickers"""
+        """Set selected tickers and save state"""
         TickerManager.initialize()
         st.session_state.ticker_state['selected_tickers'] = tickers
+        TickerManager.save_state()
 
     @staticmethod
     def get_provider_tickers(provider: Optional[str] = None) -> List[str]:

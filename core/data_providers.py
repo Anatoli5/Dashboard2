@@ -6,6 +6,8 @@ import requests
 import time
 from typing import Optional
 import streamlit as st
+from core.request_manager import RequestManager
+from core.settings_manager import SettingsManager
 
 class DataProvider(ABC):
     """Abstract base class for data providers"""
@@ -81,100 +83,122 @@ class AlphaVantageProvider(DataProvider):
 
     def fetch_data(self, ticker: str, interval: str = "1d", period: str = "max") -> pd.DataFrame:
         """Fetch data from Alpha Vantage"""
-        function, output_size = self._interval_to_function(interval)
+        request_manager = RequestManager.get_instance()
+        request_manager.set_cache_timeout(
+            SettingsManager.get_setting('cache_timeout', 3600)
+        )
         
-        max_retries = 3
-        base_delay = 2
+        # Check if it's a crypto ticker
+        is_crypto = ticker.endswith('USD') and any(c in ticker for c in ['BTC', 'ETH', 'ADA', 'SOL', 'XRP', 'DOGE', 'DOT', 'MATIC', 'LINK', 'UNI'])
         
-        for attempt in range(max_retries):
-            try:
-                if attempt > 0:
-                    delay = base_delay * (2 ** (attempt - 1))
-                    time.sleep(delay)
-                    st.info(f"Retrying {ticker} (attempt {attempt + 1}/{max_retries})...")
-
-                # Check if it's a crypto ticker
-                is_crypto = ticker.endswith('USD') and any(c in ticker for c in ['BTC', 'ETH', 'ADA', 'SOL', 'XRP', 'DOGE', 'DOT', 'MATIC', 'LINK', 'UNI'])
+        if is_crypto:
+            params = {
+                'function': 'DIGITAL_CURRENCY_DAILY',
+                'symbol': ticker[:-3],  # Remove USD suffix
+                'market': 'USD',
+                'apikey': self.api_key
+            }
+        else:
+            function, output_size = self._interval_to_function(interval)
+            params = {
+                'function': function,
+                'symbol': ticker,
+                'apikey': self.api_key,
+                'outputsize': 'full'
+            }
+        
+        try:
+            # Use asyncio to run the async request
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            data = loop.run_until_complete(
+                request_manager.request('alpha_vantage', self.base_url, params)
+            )
+            loop.close()
+            
+            # Debug: Print response structure
+            if 'Error Message' in data:
+                st.error(f"API Error for {ticker}: {data['Error Message']}")
+                return pd.DataFrame()
+            
+            # Handle different response formats for crypto vs stocks
+            if is_crypto:
+                time_series_key = 'Time Series (Digital Currency Daily)'
+                if time_series_key not in data:
+                    st.warning(f"No data received for {ticker}")
+                    if 'Note' in data:
+                        st.warning(f"API Note: {data['Note']}")
+                    return pd.DataFrame()
                 
-                if is_crypto:
-                    params = {
-                        'function': 'DIGITAL_CURRENCY_DAILY',
-                        'symbol': ticker[:-3],  # Remove USD suffix
-                        'market': 'USD',
-                        'apikey': self.api_key
-                    }
-                else:
-                    params = {
-                        'function': function,
-                        'symbol': ticker,
-                        'apikey': self.api_key,
-                        'outputsize': 'full'
-                    }
+                # Convert crypto data format
+                raw_data = data[time_series_key]
+                df = pd.DataFrame.from_dict(raw_data, orient='index')
+                df.index.name = 'Date'
                 
-                response = requests.get(self.base_url, params=params, timeout=10)
-                response.raise_for_status()
-                data = response.json()
+                # Debug: Print available columns
+                st.write(f"Available columns for {ticker}: {df.columns.tolist()}")
                 
-                # Handle different response formats for crypto vs stocks
-                if is_crypto:
-                    time_series_key = 'Time Series (Digital Currency Daily)'
-                    if time_series_key not in data:
-                        st.warning(f"No data received for {ticker}")
-                        continue
-                    
-                    # Convert crypto data format
-                    raw_data = data[time_series_key]
-                    df = pd.DataFrame.from_dict(raw_data, orient='index')
-                    
-                    # Rename crypto-specific columns
-                    column_mapping = {
-                        '1a. open (USD)': 'Open',
-                        '2a. high (USD)': 'High',
-                        '3a. low (USD)': 'Low',
-                        '4a. close (USD)': 'Close',
-                        '5. volume': 'Volume'
-                    }
-                else:
-                    time_series_key = f"Time Series ({output_size})"
-                    if time_series_key not in data:
-                        st.warning(f"No data received for {ticker}")
-                        continue
-                    
-                    # Convert stock data format
-                    df = pd.DataFrame.from_dict(data[time_series_key], orient='index')
-                    
-                    # Rename stock columns
-                    column_mapping = {
-                        '1. open': 'Open',
-                        '2. high': 'High',
-                        '3. low': 'Low',
-                        '4. close': 'Close',
-                        '5. volume': 'Volume'
-                    }
+                # For crypto, we need to use the regular column names
+                column_mapping = {
+                    '1. open': 'Open',
+                    '2. high': 'High',
+                    '3. low': 'Low',
+                    '4. close': 'Close',
+                    '5. volume': 'Volume'
+                }
                 
-                # Rename columns and convert to numeric
+                # Rename columns first
                 df = df.rename(columns=column_mapping)
-                for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
                 
-                # Sort index in ascending order
-                df.index = pd.to_datetime(df.index)
-                df = df.sort_index()
+            else:
+                time_series_key = f"Time Series ({output_size})"
+                if time_series_key not in data:
+                    st.warning(f"No data received for {ticker}")
+                    if 'Note' in data:
+                        st.warning(f"API Note: {data['Note']}")
+                    return pd.DataFrame()
                 
-                if not df.empty:
-                    return df
-                    
-            except requests.exceptions.RequestException as e:
-                if attempt == max_retries - 1:
-                    st.error(f"Failed to fetch {ticker} after {max_retries} attempts: {str(e)}")
-                continue
-            except Exception as e:
-                if attempt == max_retries - 1:
-                    st.error(f"Error processing data for {ticker}: {str(e)}")
-                continue
+                # Convert stock data format
+                df = pd.DataFrame.from_dict(data[time_series_key], orient='index')
+                df.index.name = 'Date'
                 
-        return pd.DataFrame()
+                # Rename stock columns
+                column_mapping = {
+                    '1. open': 'Open',
+                    '2. high': 'High',
+                    '3. low': 'Low',
+                    '4. close': 'Close',
+                    '5. volume': 'Volume'
+                }
+                df = df.rename(columns=column_mapping)
+            
+            # Reset index to get Date as a column, then set it back as index
+            df = df.reset_index()
+            df['Date'] = pd.to_datetime(df['Date'])
+            df = df.set_index('Date')
+            
+            # Convert numeric columns
+            for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+            # Sort index in ascending order
+            df = df.sort_index()
+            
+            # Verify we have the required columns
+            required_columns = {'Open', 'High', 'Low', 'Close', 'Volume'}
+            missing_columns = required_columns - set(df.columns)
+            if missing_columns:
+                st.warning(f"Missing columns for {ticker}: {missing_columns}")
+                st.write(f"Available columns: {df.columns.tolist()}")
+                return pd.DataFrame()
+            
+            return df
+            
+        except Exception as e:
+            st.error(f"Error fetching data for {ticker}: {str(e)}")
+            return pd.DataFrame()
 
 def get_data_provider(provider_name: str = "yahoo", api_key: Optional[str] = None) -> DataProvider:
     """Factory function to get the appropriate data provider"""
