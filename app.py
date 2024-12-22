@@ -225,32 +225,6 @@ def main():
                     )
                     DashboardLayout.render_main_area(fig)
 
-                    # Handle click events for normalization
-                    clicked_points = plotly_events(
-                        fig,
-                        click_event=True,
-                        hover_event=False,
-                        select_event=False,
-                        key="plot_events"
-                    )
-
-                    if clicked_points:
-                        event = clicked_points[0]
-                        clicked_date_str = event.get('x')
-                        try:
-                            clicked_date = pd.to_datetime(clicked_date_str)
-                            if st.session_state.norm_date != clicked_date:
-                                st.session_state.norm_date = clicked_date
-                                st.session_state.needs_rerun = True
-                                st.session_state.data_cache = {}  # Clear cache to ensure fresh normalization
-                                st.rerun()
-                        except Exception as e:
-                            st.error(f"Failed to parse clicked date: {e}")
-
-                    # Display normalization reference date if set
-                    if st.session_state.get('norm_date'):
-                        st.write("**Normalization Reference Date:**", st.session_state.norm_date.strftime('%Y-%m-%d'))
-
                 except Exception as e:
                     st.error(f"Error processing data: {str(e)}")
             else:

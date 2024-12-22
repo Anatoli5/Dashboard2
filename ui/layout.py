@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 import pandas as pd
 from core.settings_manager import SettingsManager
+from core.chart_manager import ChartManager
 
 
 class DashboardLayout:
@@ -99,5 +100,38 @@ class DashboardLayout:
         """Render the main chart area"""
         # Create a container for the chart
         with st.container():
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True})
+            # Update figure layout
+            fig.update_layout(
+                uirevision=True,  # Preserve UI state between updates
+                autosize=True,
+                margin={"l": 10, "r": 10, "t": 50, "b": 10, "pad": 0}
+            )
+            
+            # Display the chart and capture events with a single plotly_events call
+            clicked_points = plotly_events(
+                fig,
+                click_event=True,
+                hover_event=False,
+                select_event=False,
+                key="plot_events",
+                override_height=600,
+                override_width="100%"
+            )
+            
+            if clicked_points:
+                event = clicked_points[0]
+                clicked_date_str = event.get('x')
+                try:
+                    clicked_date = pd.to_datetime(clicked_date_str)
+                    if st.session_state.norm_date != clicked_date:
+                        st.session_state.norm_date = clicked_date
+                        st.session_state.needs_rerun = True
+                        st.session_state.data_cache = {}  # Clear cache to ensure fresh normalization
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to parse clicked date: {e}")
+
+            # Display normalization reference date if set
+            if st.session_state.get('norm_date'):
+                st.write("**Normalization Reference Date:**", st.session_state.norm_date.strftime('%Y-%m-%d'))
 
