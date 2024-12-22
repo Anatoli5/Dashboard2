@@ -100,21 +100,35 @@ class DashboardLayout:
         """Render the main chart area"""
         # Create a container for the chart
         with st.container():
-            # Update figure layout
-            fig.update_layout(
-                uirevision=True,  # Preserve UI state between updates
-                autosize=True,
-                margin={"l": 10, "r": 10, "t": 50, "b": 10, "pad": 0}
+            # Display the chart with Streamlit's native plotly_chart
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config=ChartManager.CHART_CONFIG
             )
             
-            # Display the chart and capture events with a single plotly_events call
+            # Create an invisible events layer that matches the main chart
+            events_fig = go.Figure(fig)  # Create a copy for events
+            events_fig.update_layout(
+                # Make it transparent but keep the same size
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                showlegend=False,
+                margin=dict(l=0, r=0, t=0, b=0, pad=0),
+                yaxis=dict(visible=False),
+                xaxis=dict(visible=False),
+                annotations=[],  # Remove any annotations
+                height=600  # Match the main chart height
+            )
+            
+            # Capture events with plotly_events
             clicked_points = plotly_events(
-                fig,
+                events_fig,
                 click_event=True,
                 hover_event=False,
                 select_event=False,
                 key="plot_events",
-                override_height=600,
+                override_height=600,  # Match the main chart height
                 override_width="100%"
             )
             
@@ -132,6 +146,7 @@ class DashboardLayout:
                     st.error(f"Failed to parse clicked date: {e}")
 
             # Display normalization reference date if set
-            if st.session_state.get('norm_date'):
-                st.write("**Normalization Reference Date:**", st.session_state.norm_date.strftime('%Y-%m-%d'))
+            norm_date = st.session_state.get('norm_date')
+            if norm_date is not None:  # Check explicitly for None
+                st.write("**Normalization Reference Date:**", norm_date.strftime('%Y-%m-%d'))
 

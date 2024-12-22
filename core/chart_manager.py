@@ -29,7 +29,9 @@ class ChartManager:
             'height': 600,
             'width': 1200,
             'scale': 2
-        }
+        },
+        'responsive': True,
+        'scrollZoom': True
     }
 
     @staticmethod
@@ -183,11 +185,11 @@ class ChartManager:
                 opacity=0.1
             )
 
-        # Set the figure configuration
+        # Set the figure configuration and ensure proper sizing
         fig.update_layout(
-            # This is a workaround to apply the config
-            # The config will be picked up by plotly_events
-            config=ChartManager.CHART_CONFIG
+            config=ChartManager.CHART_CONFIG,
+            autosize=True,
+            margin={"l": 10, "r": 10, "t": 50, "b": 10, "pad": 0}
         )
 
         return fig

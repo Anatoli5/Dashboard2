@@ -115,10 +115,11 @@ class SidebarControls:
             st.session_state.needs_rerun = True
         
         # Clear normalization
-        if st.session_state.get('norm_date'):
+        if st.session_state.get('norm_date') is not None:
             if st.sidebar.button("Clear Normalization"):
                 st.session_state.norm_date = None
                 st.session_state.needs_rerun = True
+                st.session_state.data_cache = {}
             st.sidebar.info(
                 "📌 Normalized to: " + 
                 st.session_state.norm_date.strftime('%Y-%m-%d')
