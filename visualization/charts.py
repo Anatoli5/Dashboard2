@@ -13,11 +13,11 @@ class ChartManager:
         '#1CA71C',  # Green
         '#FB0D0D',  # Red
         '#DA16FF',  # Purple
-        '#222A2A',  # Dark Gray
         '#B68100',  # Brown
-        '#750D86',  # Dark Purple
         '#EB663B',  # Orange
         '#511CFB',  # Indigo
+        '#00CED1',  # Dark Turquoise
+        '#FFD700',  # Gold
     ]
 
     @staticmethod
@@ -25,25 +25,25 @@ class ChartManager:
         """Get theme-specific colors and styles"""
         if theme == 'dark':
             return {
-                'bg_color': 'rgba(14, 17, 23, 0)',
-                'plot_bg_color': 'rgba(38, 39, 48, 0)',
-                'grid_color': '#2C2F38',
-                'text_color': '#FAFAFA',
-                'axis_color': '#FAFAFA',
+                'bg_color': '#1E1E1E',        # Darker background
+                'plot_bg_color': '#1E1E1E',   # Match plot with background
+                'grid_color': '#333333',      # Darker grid
+                'text_color': '#FFFFFF',      # Pure white text
+                'axis_color': '#666666',      # Lighter axis
                 'watermark_color': 'rgba(255, 255, 255, 0.1)',
-                'line_color': '#4F4F4F',
-                'hover_bg': 'rgba(38, 39, 48, 0.8)'
+                'line_color': '#444444',      # Line color for borders
+                'hover_bg': 'rgba(30, 30, 30, 0.9)'  # Dark hover background
             }
         else:
             return {
-                'bg_color': 'rgba(255, 255, 255, 0)',
-                'plot_bg_color': 'rgba(240, 242, 246, 0)',
+                'bg_color': '#FFFFFF',
+                'plot_bg_color': '#FFFFFF',
                 'grid_color': '#E5E5E5',
                 'text_color': '#262730',
-                'axis_color': '#262730',
+                'axis_color': '#666666',
                 'watermark_color': 'rgba(0, 0, 0, 0.1)',
                 'line_color': '#B0B0B0',
-                'hover_bg': 'rgba(255, 255, 255, 0.8)'
+                'hover_bg': 'rgba(255, 255, 255, 0.9)'
             }
 
     @staticmethod
@@ -57,13 +57,6 @@ class ChartManager:
         
         # Create figure with appropriate template
         fig = go.Figure()
-        
-        # Force template update before adding traces
-        fig.update_layout(
-            template='plotly_dark' if theme == 'dark' else 'plotly',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
 
         # Add traces with custom colors
         for i, (ticker, ticker_df) in enumerate(data_normalized.items()):
@@ -78,7 +71,7 @@ class ChartManager:
                         color=color,
                         width=2.5
                     ),
-                    customdata=[[ticker]]*len(ticker_df),  # Add ticker info for hover
+                    customdata=[[ticker]]*len(ticker_df),
                     hovertemplate="<b>%{customdata[0]}</b><br>" +
                                 "Date: %{x}<br>" +
                                 "Price: %{y:.2f}<extra></extra>"
@@ -86,6 +79,9 @@ class ChartManager:
 
         # Update layout with theme-specific configuration
         fig.update_layout(
+            template='plotly_dark' if theme == 'dark' else 'plotly',
+            plot_bgcolor=colors['plot_bg_color'],
+            paper_bgcolor=colors['bg_color'],
             font=dict(
                 family="Arial, sans-serif",
                 size=12,
@@ -150,14 +146,14 @@ class ChartManager:
                 bordercolor=colors['line_color']
             ),
             autosize=True,
-            height=600,  # Fixed height
-            width=None,  # Allow width to be responsive
+            height=600,
+            width=None,
             modebar=dict(
                 bgcolor='rgba(0,0,0,0)',
                 color=colors['text_color'],
                 activecolor=colors['text_color']
             ),
-            dragmode='pan'  # Enable pan by default
+            dragmode='pan'
         )
 
         # Add watermark

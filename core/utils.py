@@ -6,50 +6,50 @@ import streamlit as st
 from typing import Dict
 
 
-def normalize_data(data_dict: Dict[str, pd.DataFrame], reference_date) -> Dict[str, pd.DataFrame]:
-    """Normalize price data relative to a reference date"""
-    if reference_date is None:
+def normalize_data(data_dict, norm_date=None):
+    """
+    Normalize data for comparison.
+    
+    Args:
+        data_dict (dict): Dictionary of DataFrames with price data
+        norm_date (datetime.date, optional): Date to normalize to. If None, uses first date
+        
+    Returns:
+        dict: Dictionary of normalized DataFrames
+    """
+    if not data_dict or all(df.empty for df in data_dict.values()):
         return data_dict
-
+        
+    # Use existing data without copying if no normalization needed
+    if not norm_date:
+        return data_dict
+        
     normalized = {}
-    try:
-        # Ensure reference_date is pandas Timestamp
-        if not isinstance(reference_date, pd.Timestamp):
-            reference_date = pd.to_datetime(reference_date)
-
-        for ticker, ticker_df in data_dict.items():
-            if ticker_df.empty:
-                normalized[ticker] = ticker_df
-                continue
-
-            # Ensure the index is sorted
-            ticker_df = ticker_df.sort_index()
-
-            # Find exact match or closest date
-            if reference_date in ticker_df.index:
-                ref_price = ticker_df.loc[reference_date, 'close']
-            else:
-                pos = ticker_df.index.searchsorted(reference_date)
-                if pos == 0:
-                    closest_index = 0
-                elif pos == len(ticker_df):
-                    closest_index = len(ticker_df) - 1
-                else:
-                    before = ticker_df.index[pos - 1]
-                    after = ticker_df.index[pos]
-                    closest_index = pos if after - reference_date < reference_date - before else pos - 1
-
-                ref_price = ticker_df.iloc[closest_index]['close']
-
-            # Create normalized DataFrame with simple ratio normalization (no *100)
-            norm_df = ticker_df.copy()
-            norm_df['close'] = norm_df['close'] / ref_price
-            normalized[ticker] = norm_df
-
-    except Exception as e:
-        st.error(f"Error during normalization: {str(e)}")
-        return data_dict
-
+    for ticker, df in data_dict.items():
+        if df.empty:
+            normalized[ticker] = df
+            continue
+            
+        try:
+            # Find normalization value
+            norm_date_ts = pd.Timestamp(norm_date)
+            if norm_date_ts not in df.index:
+                # If exact date not found, use nearest date
+                nearest_date = min(df.index, key=lambda x: abs(x - norm_date_ts))
+                st.info(f"Using nearest date {nearest_date.date()} for normalization of {ticker}")
+                norm_date_ts = nearest_date
+            
+            # Only normalize the close column which is used for display
+            df_norm = df.copy()
+            norm_value = df.loc[norm_date_ts, 'close']
+            df_norm['close'] = (df['close'] / norm_value) * 100
+                    
+            normalized[ticker] = df_norm
+            
+        except Exception as e:
+            st.error(f"Error normalizing {ticker}: {str(e)}")
+            normalized[ticker] = df
+            
     return normalized
 
 def adjust_range_and_interval(start_date: datetime, end_date: datetime, interval: str) -> str:

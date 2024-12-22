@@ -4,111 +4,72 @@ import pandas as pd
 from datetime import datetime
 from sqlalchemy import create_engine, text
 import streamlit as st
-from typing import Dict, List
+from typing import Dict, List, Optional
 from core.database_utils import DB_PATH
 from core.data_providers import get_data_provider, DataProvider
 
 
 class DatabaseManager:
-    def __init__(self, data_provider: str = "yahoo", api_key: str = None):
-        self.engine = create_engine(f"sqlite:///{DB_PATH}", 
-                                  echo=False, 
-                                  future=True,
-                                  pool_pre_ping=True,
-                                  pool_recycle=3600)
-        self.data_provider = get_data_provider(data_provider, api_key)
-        self.validate_db()
-
-    def validate_db(self) -> None:
-        """Ensure database is properly initialized"""
-        from core.database_utils import validate_database_structure
-        if not validate_database_structure():
-            st.error("Database validation failed")
-            raise Exception("Database validation failed")
-
-    def update_ticker_data(self, tickers: List[str], interval: str = "1d", force: bool = False) -> None:
-        """Update ticker data using a new connection for each ticker"""
-        now = datetime.utcnow().isoformat()
-        successful_updates = []
-        failed_updates = []
+    """Manages database operations for ticker data"""
+    
+    def __init__(self, data_provider: str = "yahoo", api_key: Optional[str] = None):
+        """Initialize database manager"""
+        self.engine = create_engine(f'sqlite:///{DB_PATH}')
+        self.provider = get_data_provider(data_provider, api_key)
         
-        for ticker in tickers:
-            try:
-                # Check if update is needed
-                with self.engine.begin() as conn:
-                    result = conn.execute(
-                        text("SELECT last_update FROM metadata WHERE ticker=:ticker AND interval=:interval"),
-                        {"ticker": ticker, "interval": interval}
-                    ).fetchone()
+    def update_ticker_data(
+            self,
+            tickers: List[str],
+            interval: str = "1d",
+            force: bool = False
+    ) -> None:
+        """Update data for given tickers"""
+        with self.engine.connect() as conn:
+            for ticker in tickers:
+                try:
+                    # Check if we need to update
+                    if not force:
+                        query = text("""
+                            SELECT MAX(date) as last_date 
+                            FROM ticker_data 
+                            WHERE ticker=:ticker 
+                            AND interval=:interval
+                        """)
+                        result = conn.execute(query, {"ticker": ticker, "interval": interval})
+                        row = result.fetchone()
+                        
+                        if row and row[0]:
+                            last_date = pd.to_datetime(row[0])
+                            if last_date.date() >= datetime.now().date():
+                                continue
                     
-                    if not force and result and (datetime.utcnow() - datetime.fromisoformat(result[0])).total_seconds() < 3600:
-                        successful_updates.append(ticker)
+                    # Fetch new data
+                    df = self.provider.fetch_data(ticker, interval)
+                    if df.empty:
                         continue
-
-                # Fetch new data using the selected provider
-                fetched_df = self.data_provider.fetch_data(ticker, interval=interval)
-                if fetched_df.empty:
-                    failed_updates.append(ticker)
-                    continue
-
-                # Process and save data
-                with self.engine.begin() as conn:
-                    fetched_df.reset_index(inplace=True)
-                    records = []
-                    for _, row in fetched_df.iterrows():
-                        date_val = row['Date']
-                        if isinstance(date_val, pd.Series):
-                            date_val = date_val.iloc[0]
-                        
-                        records.append({
-                            'ticker': ticker,
-                            'date': date_val.isoformat(),
-                            'open': float(row['Open'].iloc[0]) if isinstance(row['Open'], pd.Series) else float(row['Open']),
-                            'high': float(row['High'].iloc[0]) if isinstance(row['High'], pd.Series) else float(row['High']),
-                            'low': float(row['Low'].iloc[0]) if isinstance(row['Low'], pd.Series) else float(row['Low']),
-                            'close': float(row['Close'].iloc[0]) if isinstance(row['Close'], pd.Series) else float(row['Close']),
-                            'volume': float(row['Volume'].iloc[0]) if isinstance(row['Volume'], pd.Series) else float(row['Volume']),
-                            'interval': interval
-                        })
-
-                    # Update database in a single transaction
-                    conn.execute(
-                        text("DELETE FROM ticker_data WHERE ticker=:ticker AND interval=:interval"),
-                        {"ticker": ticker, "interval": interval}
-                    )
-
-                    if records:
-                        conn.execute(
-                            text("""
-                                INSERT INTO ticker_data 
-                                (ticker, date, open, high, low, close, volume, interval)
-                                VALUES 
-                                (:ticker, :date, :open, :high, :low, :close, :volume, :interval)
-                            """),
-                            records
-                        )
-
-                        conn.execute(
-                            text("""
-                                INSERT OR REPLACE INTO metadata (ticker, interval, last_update)
-                                VALUES (:ticker, :interval, :last_update)
-                            """),
-                            {"ticker": ticker, "interval": interval, "last_update": now}
-                        )
-                        
-                    successful_updates.append(ticker)
-
-            except Exception as e:
-                st.error(f"Error processing {ticker}: {str(e)}")
-                failed_updates.append(ticker)
-                continue
-
-        # Show summary of updates
-        if successful_updates:
-            st.success(f"Successfully updated: {', '.join(successful_updates)}")
-        if failed_updates:
-            st.warning(f"Failed to update: {', '.join(failed_updates)}")
-
+                    
+                    # Ensure column names are lowercase for storage
+                    df.columns = df.columns.str.lower()
+                    
+                    # Prepare data for insertion
+                    df = df.reset_index()
+                    df['ticker'] = ticker
+                    df['interval'] = interval
+                    
+                    # Delete existing data for this ticker and interval
+                    delete_query = text("""
+                        DELETE FROM ticker_data 
+                        WHERE ticker=:ticker 
+                        AND interval=:interval
+                    """)
+                    conn.execute(delete_query, {"ticker": ticker, "interval": interval})
+                    
+                    # Insert new data
+                    df.to_sql('ticker_data', conn, if_exists='append', index=False)
+                    
+                except Exception as e:
+                    st.error(f"Error updating data for ticker {ticker}: {str(e)}")
+    
     def load_data_for_tickers(
             self,
             tickers: List[str],
@@ -123,7 +84,7 @@ class DatabaseManager:
             for ticker in tickers:
                 try:
                     query = text("""
-                        SELECT date, close 
+                        SELECT date, open, high, low, close, volume 
                         FROM ticker_data
                         WHERE ticker=:ticker 
                         AND interval=:interval
@@ -143,6 +104,8 @@ class DatabaseManager:
                     if not df.empty:
                         df['date'] = pd.to_datetime(df['date'])
                         df.set_index('date', inplace=True)
+                        # Keep column names lowercase for consistency
+                        df.columns = df.columns.str.lower()
                     data[ticker] = df
 
                 except Exception as e:

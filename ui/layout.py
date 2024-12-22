@@ -212,15 +212,38 @@ class DashboardLayout:
             """, unsafe_allow_html=True)
 
     @staticmethod
-    def setup_page() -> None:
-        """Set up the page layout and theme"""
+    def setup_page():
+        """Setup page configuration and theme"""
+        # Set dark theme as default
         st.set_page_config(
+            page_title="Financial Dashboard",
+            page_icon="📈",
             layout="wide",
             initial_sidebar_state="expanded",
-            page_title="Financial Dashboard",
-            page_icon="📈"
+            menu_items={
+                'Get Help': None,
+                'Report a bug': None,
+                'About': None
+            }
         )
-        DashboardLayout.apply_theme()
+        
+        # Force dark theme
+        st.markdown("""
+            <script>
+                var observer = new MutationObserver(function(mutations) {
+                    if (document.querySelector('iframe')) {
+                        document.querySelector('iframe').setAttribute('data-theme', 'dark');
+                        observer.disconnect();
+                    }
+                });
+                
+                observer.observe(document, {childList: true, subtree: true});
+            </script>
+            """, unsafe_allow_html=True)
+        
+        # Set theme in session state
+        if 'theme' not in st.session_state:
+            st.session_state.theme = 'dark'
 
     @staticmethod
     def render_main_area(fig: go.Figure) -> None:
@@ -289,7 +312,6 @@ class DashboardLayout:
                 override_height="600px",
                 key="plot"
             )
-
             # Handle click events for normalization
             if clicked_points:
                 event = clicked_points[0]
@@ -304,3 +326,4 @@ class DashboardLayout:
             # Display normalization reference date if set
             if st.session_state.get('norm_date'):
                 st.write("**Normalization Reference Date:**", st.session_state['norm_date'])
+

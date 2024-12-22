@@ -1,0 +1,6 @@
+{
+    "theme": "dark",
+    "data_provider": "yahoo",
+    "alpha_vantage_key": "",
+    "chart_height": 600
+}

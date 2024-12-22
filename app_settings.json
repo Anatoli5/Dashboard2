@@ -1,1 +1,1 @@
-{"data_provider": "yahoo", "alpha_vantage_key": "AM8FG2V4RYAO4WVZ", "interval": "1d", "log_scale": false, "theme": "dark", "cache_timeout": 3600, "max_retries": 3, "retry_delay": 2}
+{"data_provider": "yahoo", "alpha_vantage_key": "AM8FG2V4RYAO4WVZ", "interval": "1d", "log_scale": false, "theme": "dark", "cache_timeout": 3600, "max_retries": 3, "retry_delay": 2, "alphavantage_api_key": "AM8FG2V4RYAO4WVZ"}

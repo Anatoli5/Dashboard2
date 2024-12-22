@@ -1,0 +1,1 @@
+{"lists": {"default": {"name": "Default List", "description": "Default ticker list", "tickers": ["BTC-USD", "ETH-USD"], "provider": "yahoo"}, "cripto1": {"name": "cripto1", "description": "cripto1", "tickers": ["ETH-USD", "BTC-USD", "SOL-USD", "DOGE-USD", "XRP-USD"], "provider": "yahoo"}}, "active_list": "cripto1"}

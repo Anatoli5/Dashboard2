@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from core.settings_manager import SettingsManager
 from core.ticker_manager import TickerManager
 from core.symbol_search import SymbolSearch
+from ui.ticker_lists import TickerListsUI
 
 
 class SidebarControls:
@@ -14,7 +15,7 @@ class SidebarControls:
         # Settings section
         with st.sidebar.expander("⚙️ Settings", expanded=False):
             # Theme selector
-            current_theme = SettingsManager.get_setting('theme', 'dark')
+            current_theme = st.session_state.theme
             new_theme = st.selectbox(
                 "Theme",
                 options=['dark', 'light'],
@@ -23,10 +24,11 @@ class SidebarControls:
             )
             if new_theme != current_theme:
                 SettingsManager.set_setting('theme', new_theme)
-                st.rerun()
+                st.session_state.theme = new_theme
+                st.session_state.needs_rerun = True
             
             # Data provider selector
-            current_provider = SettingsManager.get_setting('data_provider', 'yahoo')
+            current_provider = st.session_state.data_provider
             new_provider = st.selectbox(
                 "Data Provider",
                 options=['yahoo', 'alphavantage'],
@@ -47,87 +49,77 @@ class SidebarControls:
             
             if new_provider != current_provider:
                 SettingsManager.set_setting('data_provider', new_provider)
-                st.rerun()
-
+                st.session_state.data_provider = new_provider
+                st.session_state.needs_rerun = True
+                st.session_state.data_cache = {}
+                st.session_state.cached_interval = None
+        
         st.sidebar.markdown("---")
 
-        # Ticker selection
-        st.sidebar.subheader("Ticker Selection")
-        
-        # Symbol search for Alpha Vantage
-        if SettingsManager.get_setting('data_provider') == 'alphavantage':
-            search_query = st.sidebar.text_input(
-                "Search Symbols",
-                key="symbol_search",
-                help="Enter keywords to search for symbols"
-            )
-            
-            if search_query:
-                results = SymbolSearch.search_symbols(search_query)
-                if results:
-                    selected_symbol = st.sidebar.selectbox(
-                        "Found Symbols",
-                        options=[f"{r['symbol']} - {r['name']}" for r in results],
-                        format_func=lambda x: x.split(' - ')[0]
-                    )
-                    if st.sidebar.button("Add Symbol"):
-                        symbol = selected_symbol.split(' - ')[0]
-                        TickerManager.add_ticker(symbol)
-                        st.rerun()
-                else:
-                    st.sidebar.info("No symbols found")
-        
-        # Display selected tickers
-        selected_tickers = TickerManager.get_selected_tickers()
-        if selected_tickers:
-            st.sidebar.write("Selected Tickers:")
-            cols = st.sidebar.columns([3, 1])
-            for ticker in selected_tickers:
-                cols[0].write(f"• {ticker}")
-                if cols[1].button("❌", key=f"remove_{ticker}"):
-                    TickerManager.remove_ticker(ticker)
-                    st.rerun()
+        # Render ticker lists section
+        TickerListsUI.render_ticker_lists_section()
         
         st.sidebar.markdown("---")
 
         # Date range selection
         st.sidebar.subheader("Date Range")
+        
+        # End date selection
         end_date = st.sidebar.date_input(
             "End Date",
-            value=st.session_state.get('end_date', datetime.now().date()),
+            value=st.session_state.end_date,
             max_value=datetime.now().date(),
-            key="end_date"
+            key="end_date_input"
         )
+        if end_date != st.session_state.end_date:
+            st.session_state.end_date = end_date
+            st.session_state.needs_rerun = True
+            st.session_state.cached_interval = None
+        
+        # Start date selection
         start_date = st.sidebar.date_input(
             "Start Date",
-            value=st.session_state.get('start_date', (datetime.now() - timedelta(days=365)).date()),
+            value=st.session_state.start_date,
             max_value=end_date,
-            key="start_date"
+            key="start_date_input"
         )
+        if start_date != st.session_state.start_date:
+            st.session_state.start_date = start_date
+            st.session_state.needs_rerun = True
+            st.session_state.cached_interval = None
         
         # Interval selection
         st.sidebar.subheader("Interval")
         interval = st.sidebar.selectbox(
             "Select Interval",
             options=['1d', '1wk', '1mo'],
-            index=['1d', '1wk', '1mo'].index(st.session_state.get('interval', '1d')),
-            key="interval"
+            index=['1d', '1wk', '1mo'].index(st.session_state.interval),
+            key="interval_selector"
         )
+        if interval != st.session_state.interval:
+            st.session_state.interval = interval
+            st.session_state.needs_rerun = True
+            st.session_state.cached_interval = None
         
         # Chart options
         st.sidebar.subheader("Chart Options")
+        
+        # Log scale checkbox
         log_scale = st.sidebar.checkbox(
             "Logarithmic Scale",
-            value=st.session_state.get('log_scale', False),
-            key="log_scale"
+            value=st.session_state.log_scale,
+            key="log_scale_checkbox"
         )
+        if log_scale != st.session_state.log_scale:
+            st.session_state.log_scale = log_scale
+            st.session_state.needs_rerun = True
         
         # Clear normalization
         if st.session_state.get('norm_date'):
             if st.sidebar.button("Clear Normalization"):
-                st.session_state['norm_date'] = None
-                st.rerun()
+                st.session_state.norm_date = None
+                st.session_state.needs_rerun = True
             st.sidebar.info(
                 "📌 Normalized to: " + 
-                st.session_state['norm_date'].strftime('%Y-%m-%d')
+                st.session_state.norm_date.strftime('%Y-%m-%d')
             )

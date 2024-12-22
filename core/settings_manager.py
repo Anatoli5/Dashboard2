@@ -2,88 +2,83 @@ from typing import Dict, Any, Optional
 import streamlit as st
 from datetime import datetime, timedelta
 import json
-from pathlib import Path
-import atexit
-
-class Settings:
-    """Settings configuration class"""
-    
-    SETTINGS_FILE = "app_settings.json"
-    
-    # Default settings
-    DEFAULTS = {
-        'data_provider': 'yahoo',
-        'alpha_vantage_key': None,
-        'interval': '1d',
-        'log_scale': False,
-        'theme': 'dark',
-        'cache_timeout': 3600,  # 1 hour in seconds
-        'max_retries': 3,
-        'retry_delay': 2
-    }
+import os
 
 class SettingsManager:
-    """Manages application settings and their persistence"""
+    """Manages application settings"""
     
-    @staticmethod
-    def load_settings():
-        """Load settings from file"""
-        if Path(Settings.SETTINGS_FILE).exists():
-            try:
-                with open(Settings.SETTINGS_FILE, 'r') as f:
-                    settings = json.load(f)
-                    # Ensure all default settings exist
-                    for key, value in Settings.DEFAULTS.items():
-                        if key not in settings:
-                            settings[key] = value
-                    return settings
-            except Exception:
-                return Settings.DEFAULTS.copy()
-        return Settings.DEFAULTS.copy()
+    _settings_file = "settings.json"
+    _settings = None
+    _initialized = False
     
-    @staticmethod
-    def save_settings():
+    @classmethod
+    def initialize_settings(cls) -> None:
+        """Initialize settings from file or defaults"""
+        if cls._initialized:
+            return
+            
+        try:
+            if os.path.exists(cls._settings_file):
+                with open(cls._settings_file, 'r') as f:
+                    cls._settings = json.load(f)
+            else:
+                cls._settings = {}
+                
+            # Set defaults if not present
+            defaults = {
+                'theme': 'dark',
+                'data_provider': 'yahoo',
+                'alpha_vantage_key': '',
+                'chart_height': 600
+            }
+            
+            for key, value in defaults.items():
+                if key not in cls._settings:
+                    cls._settings[key] = value
+                    
+            cls._initialized = True
+            
+        except Exception as e:
+            print(f"Error initializing settings: {str(e)}")
+            cls._settings = {}
+    
+    @classmethod
+    def save_settings(cls) -> None:
         """Save settings to file"""
-        if hasattr(st, 'session_state') and 'settings' in st.session_state:
-            try:
-                with open(Settings.SETTINGS_FILE, 'w') as f:
-                    json.dump(st.session_state.settings, f)
-            except Exception as e:
-                st.warning(f"Could not save settings: {str(e)}")
+        if not cls._settings:
+            return
+            
+        try:
+            with open(cls._settings_file, 'w') as f:
+                json.dump(cls._settings, f, indent=4)
+        except Exception as e:
+            print(f"Error saving settings: {str(e)}")
     
-    @staticmethod
-    def initialize_settings():
-        """Initialize settings in session state"""
-        if 'settings' not in st.session_state:
-            st.session_state.settings = SettingsManager.load_settings()
-            # Register cleanup handler
-            atexit.register(SettingsManager.save_settings)
-    
-    @staticmethod
-    def get_setting(key: str, default: Any = None) -> Any:
+    @classmethod
+    def get_setting(cls, key: str, default: Any = None) -> Any:
         """Get a setting value"""
-        SettingsManager.initialize_settings()
-        return st.session_state.settings.get(key, default)
+        if not cls._settings:
+            cls.initialize_settings()
+        return cls._settings.get(key, default)
     
-    @staticmethod
-    def set_setting(key: str, value: Any):
+    @classmethod
+    def set_setting(cls, key: str, value: Any) -> None:
         """Set a setting value"""
-        SettingsManager.initialize_settings()
-        if st.session_state.settings.get(key) != value:
-            st.session_state.settings[key] = value
-            SettingsManager.save_settings()
-        
-    @staticmethod
-    def update_settings(settings: Dict[str, Any]):
-        """Update multiple settings at once"""
-        SettingsManager.initialize_settings()
-        changed = False
-        for key, value in settings.items():
-            if st.session_state.settings.get(key) != value:
-                st.session_state.settings[key] = value
-                changed = True
-        if changed:
-            SettingsManager.save_settings()
+        if not cls._settings:
+            cls.initialize_settings()
+            
+        if cls._settings.get(key) != value:
+            cls._settings[key] = value
+            # Only trigger rerun if we're in a Streamlit context
+            if hasattr(st, 'session_state'):
+                st.session_state.needs_rerun = True
+    
+    @classmethod
+    def get_all_settings(cls) -> Dict[str, Any]:
+        """Get all settings"""
+        if not cls._settings:
+            cls.initialize_settings()
+        return cls._settings.copy()
 
 class SettingsUI:
     """UI component for settings management"""
@@ -129,10 +124,7 @@ class SettingsUI:
                 with col2:
                     if st.button("Apply", key="apply_api_key"):
                         if api_key:
-                            SettingsManager.update_settings({
-                                'data_provider': 'alpha_vantage',
-                                'alpha_vantage_key': api_key
-                            })
+                            SettingsManager.set_setting('alpha_vantage_key', api_key)
                             provider_changed = True
                             st.success("API key saved!")
                         else:
@@ -140,17 +132,11 @@ class SettingsUI:
                 
                 if not api_key and current_provider == 'alpha_vantage':
                     st.warning("API key required for Alpha Vantage")
-                    SettingsManager.update_settings({
-                        'data_provider': 'yahoo',
-                        'alpha_vantage_key': None
-                    })
+                    SettingsManager.set_setting('alpha_vantage_key', '')
                     provider_changed = True
             
             elif new_provider != current_provider:
-                SettingsManager.update_settings({
-                    'data_provider': 'yahoo',
-                    'alpha_vantage_key': None
-                })
+                SettingsManager.set_setting('alpha_vantage_key', '')
                 provider_changed = True
             
             # Chart Settings
@@ -196,9 +182,7 @@ class SettingsUI:
             )
             if max_retries != SettingsManager.get_setting('max_retries') or \
                retry_delay != SettingsManager.get_setting('retry_delay'):
-                SettingsManager.update_settings({
-                    'max_retries': max_retries,
-                    'retry_delay': retry_delay
-                })
+                SettingsManager.set_setting('max_retries', max_retries)
+                SettingsManager.set_setting('retry_delay', retry_delay)
         
         return provider_changed
