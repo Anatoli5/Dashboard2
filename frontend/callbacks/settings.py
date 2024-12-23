@@ -2,16 +2,17 @@
 
 import json
 from typing import Dict, List
-from dash import Dash, Input, Output, State, ALL
+from dash import Dash, Input, Output, State, ALL, ctx
 import dash_bootstrap_components as dbc
 from core.state_manager import StateManager
-from dash import callback_context
 
 def save_app_state(app_state):
     """Save app state to file."""
     try:
+        print("Saving app state:", app_state)
         with open('app_state.json', 'w') as f:
             json.dump(app_state, f, indent=4)
+        print("App state saved successfully")
     except Exception as e:
         print(f"Error saving app state: {e}")
 
@@ -19,7 +20,9 @@ def load_app_state():
     """Load app state from file."""
     try:
         with open('app_state.json', 'r') as f:
-            return json.load(f)
+            state = json.load(f)
+            print("Loaded app state:", state)
+            return state
     except Exception as e:
         print(f"Error loading app state: {e}")
         return {}
@@ -46,15 +49,33 @@ def register_settings_callbacks(app: Dash) -> None:
     )
     def update_theme(new_theme, current_theme):
         """Update the theme and persist the selection."""
+        print("Theme callback triggered")
+        print("New theme:", new_theme)
+        print("Current theme:", current_theme)
+        print("Triggered by:", ctx.triggered_id)
+        
+        # If this is an automatic trigger (not user action), keep current theme
+        if not ctx.triggered_id:
+            print("Automatic trigger - keeping current theme")
+            app_state = load_app_state()
+            saved_theme = app_state.get('theme')
+            if saved_theme:
+                return saved_theme, saved_theme
+            return current_theme, current_theme
+            
         if not new_theme:
+            print("No theme selected, using default")
             return dbc.themes.DARKLY, dbc.themes.DARKLY
             
-        # Save theme to app state
-        try:
-            app_state = load_app_state()
-            app_state['theme'] = new_theme  # Save the full theme URL
-            save_app_state(app_state)
-        except Exception as e:
-            print(f"Error saving theme: {e}")
+        # Only save if this is a user change
+        if new_theme != current_theme:
+            print("Theme changed by user, saving...")
+            try:
+                app_state = load_app_state()
+                app_state['theme'] = new_theme
+                save_app_state(app_state)
+                print("Theme saved successfully:", new_theme)
+            except Exception as e:
+                print(f"Error saving theme: {e}")
             
         return new_theme, new_theme 

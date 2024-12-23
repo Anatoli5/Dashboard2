@@ -45,9 +45,9 @@ def register_chart_callbacks(app: Dash) -> None:
     """Register chart-related callbacks."""
     
     data_manager = DataManager()
-    
+
     @app.callback(
-        Output('price-chart', 'figure'),
+        Output('chart', 'figure'),
         [
             Input('ticker-dropdown', 'value'),
             Input('interval-dropdown', 'value'),
@@ -56,9 +56,9 @@ def register_chart_callbacks(app: Dash) -> None:
             Input('update-button', 'n_clicks'),
             Input('log-scale-switch', 'value'),
             Input('normalize-switch', 'value'),
-            Input('price-chart', 'clickData')
+            Input('chart', 'clickData')
         ],
-        [State('price-chart', 'figure')]
+        [State('chart', 'figure')]
     )
     def update_chart(
         tickers: List[str],
@@ -76,7 +76,7 @@ def register_chart_callbacks(app: Dash) -> None:
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
         
         # Save current settings to state
-        if triggered_id not in ['price-chart']:
+        if triggered_id not in ['chart']:
             StateManager.update_state({
                 'interval': interval,
                 'log_scale': log_scale,
@@ -84,7 +84,7 @@ def register_chart_callbacks(app: Dash) -> None:
                 'start_date': start_date,
                 'end_date': end_date
             })
-        
+
         # Handle empty tickers
         if not tickers:
             return {
@@ -93,16 +93,16 @@ def register_chart_callbacks(app: Dash) -> None:
                     'title': {
                         'text': 'Select tickers to display',
                         'x': 0.5,
-                        'xanchor': 'center'
+                        'xanchor': 'center',
+                        'font': {'color': THEME['text_primary']}
                     },
                     'showlegend': True,
                     'template': 'plotly_dark',
-                    'height': 600,
-                    'xaxis': {'showgrid': True},
-                    'yaxis': {'showgrid': True},
-                    'paper_bgcolor': THEME['dark']['bg_color'],
-                    'plot_bgcolor': THEME['dark']['plot_bg_color'],
-                    'font': {'color': THEME['dark']['text_color']},
+                    'xaxis': {'showgrid': True, 'gridcolor': THEME['grid']},
+                    'yaxis': {'showgrid': True, 'gridcolor': THEME['grid']},
+                    'paper_bgcolor': THEME['chart_outer_bg'],
+                    'plot_bgcolor': THEME['chart_inner_bg'],
+                    'font': {'color': THEME['text_primary']},
                     'annotations': [{
                         'text': 'Use the controls on the left to select tickers',
                         'xref': 'paper',
@@ -110,11 +110,11 @@ def register_chart_callbacks(app: Dash) -> None:
                         'x': 0.5,
                         'y': 0.5,
                         'showarrow': False,
-                        'font': {'size': 16, 'color': THEME['dark']['text_color']}
+                        'font': {'size': 16, 'color': THEME['text_primary']}
                     }]
                 }
             }
-        
+
         try:
             # Convert dates
             if not start_date or not end_date:
@@ -125,7 +125,7 @@ def register_chart_callbacks(app: Dash) -> None:
                 end = datetime.strptime(end_date, '%Y-%m-%d')
             
             # Only update data if not triggered by click or switches
-            if triggered_id not in ['price-chart', 'log-scale-switch', 'normalize-switch']:
+            if triggered_id not in ['chart', 'log-scale-switch', 'normalize-switch']:
                 data_manager.update_ticker_data(tickers, interval)
             
             # Load data
@@ -138,7 +138,7 @@ def register_chart_callbacks(app: Dash) -> None:
             
             # Get click point for normalization
             click_point = None
-            if normalize and click_data and triggered_id == 'price-chart':
+            if normalize and click_data and triggered_id == 'chart':
                 click_point = click_data['points'][0]
             
             # Create traces
@@ -173,7 +173,7 @@ def register_chart_callbacks(app: Dash) -> None:
                                 bgcolor=THEME['hover_bg'],
                                 bordercolor=color,
                                 font=dict(
-                                    color=color,
+                                    color=THEME['text_primary'],
                                     size=13
                                 )
                             )
@@ -199,7 +199,7 @@ def register_chart_callbacks(app: Dash) -> None:
                                 bgcolor=THEME['hover_bg'],
                                 bordercolor=color,
                                 font=dict(
-                                    color=color,
+                                    color=THEME['text_primary'],
                                     size=13
                                 )
                             ),
@@ -211,39 +211,44 @@ def register_chart_callbacks(app: Dash) -> None:
                 return {
                     'data': [],
                     'layout': {
-                        'title': 'No data available for selected tickers',
+                        'title': {
+                            'text': 'No data available for selected tickers',
+                            'x': 0.5,
+                            'xanchor': 'center',
+                            'font': {'color': THEME['text_primary']}
+                        },
                         'showlegend': True,
                         'template': 'plotly_dark',
                         'xaxis': {
                             'title': 'Date',
                             'rangeslider': {'visible': False},
                             'showgrid': True,
-                            'gridcolor': '#333',
+                            'gridcolor': THEME['grid'],
                             'domain': [0, 1],
-                            'color': THEME['dark']['text_color']
+                            'color': THEME['text_primary']
                         },
                         'yaxis': {
                             'title': 'Normalized Price (%)' if normalize else 'Price',
                             'showgrid': True,
-                            'gridcolor': '#333',
+                            'gridcolor': THEME['grid'],
                             'type': 'log' if log_scale else 'linear',
                             'side': 'left',
-                            'color': THEME['dark']['text_color']
+                            'color': THEME['text_primary']
                         },
                         'yaxis2': {
                             'title': 'Volume',
                             'showgrid': False,
                             'side': 'right',
                             'overlaying': 'y',
-                            'color': THEME['dark']['text_color']
+                            'color': THEME['text_primary']
                         },
-                        'paper_bgcolor': THEME['dark']['bg_color'],
-                        'plot_bgcolor': 'rgba(0,0,0,0)',
-                        'font': {'color': THEME['dark']['text_color']},
+                        'paper_bgcolor': THEME['chart_outer_bg'],
+                        'plot_bgcolor': THEME['chart_inner_bg'],
+                        'font': {'color': THEME['text_primary']},
                         'hovermode': 'closest',
                         'hoverdistance': 50,
                         'hoverlabel': {
-                            'bgcolor': '#111111',
+                            'bgcolor': THEME['hover_bg'],
                             'font': {'size': 13},
                             'align': 'right',
                             'namelength': -1
@@ -251,13 +256,13 @@ def register_chart_callbacks(app: Dash) -> None:
                         'dragmode': 'zoom',
                         'modebar': {
                             'bgcolor': 'rgba(0,0,0,0)',
-                            'color': THEME['dark']['text_color'],
-                            'activecolor': THEME['dark']['text_color']
+                            'color': THEME['text_primary'],
+                            'activecolor': THEME['text_primary']
                         },
                         'legend': {
                             'bgcolor': 'rgba(0,0,0,0)',
-                            'font': {'color': THEME['dark']['text_color']},
-                            'bordercolor': THEME['dark']['grid_color'],
+                            'font': {'color': THEME['text_primary']},
+                            'bordercolor': THEME['border'],
                             'borderwidth': 1
                         },
                         'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
@@ -299,8 +304,8 @@ def register_chart_callbacks(app: Dash) -> None:
                         'overlaying': 'y',
                         'color': THEME['text_primary']
                     },
-                    'paper_bgcolor': 'rgba(0,0,0,0)',
-                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'paper_bgcolor': THEME['chart_outer_bg'],
+                    'plot_bgcolor': THEME['chart_inner_bg'],
                     'font': {'color': THEME['text_primary']},
                     'hovermode': 'closest',
                     'hoverdistance': 50,
@@ -333,39 +338,44 @@ def register_chart_callbacks(app: Dash) -> None:
             return current_figure or {
                 'data': [],
                 'layout': {
-                    'title': f'Error: {str(e)}',
+                    'title': {
+                        'text': f'Error: {str(e)}',
+                        'x': 0.5,
+                        'xanchor': 'center',
+                        'font': {'color': THEME['text_primary']}
+                    },
                     'showlegend': True,
                     'template': 'plotly_dark',
                     'xaxis': {
                         'title': 'Date',
                         'rangeslider': {'visible': False},
                         'showgrid': True,
-                        'gridcolor': '#333',
+                        'gridcolor': THEME['grid'],
                         'domain': [0, 1],
-                        'color': THEME['dark']['text_color']
+                        'color': THEME['text_primary']
                     },
                     'yaxis': {
                         'title': 'Normalized Price (%)' if normalize else 'Price',
                         'showgrid': True,
-                        'gridcolor': '#333',
+                        'gridcolor': THEME['grid'],
                         'type': 'log' if log_scale else 'linear',
                         'side': 'left',
-                        'color': THEME['dark']['text_color']
+                        'color': THEME['text_primary']
                     },
                     'yaxis2': {
                         'title': 'Volume',
                         'showgrid': False,
                         'side': 'right',
                         'overlaying': 'y',
-                        'color': THEME['dark']['text_color']
+                        'color': THEME['text_primary']
                     },
-                    'paper_bgcolor': THEME['dark']['bg_color'],
-                    'plot_bgcolor': 'rgba(0,0,0,0)',
-                    'font': {'color': THEME['dark']['text_color']},
+                    'paper_bgcolor': THEME['chart_outer_bg'],
+                    'plot_bgcolor': THEME['chart_inner_bg'],
+                    'font': {'color': THEME['text_primary']},
                     'hovermode': 'closest',
                     'hoverdistance': 50,
                     'hoverlabel': {
-                        'bgcolor': '#111111',
+                        'bgcolor': THEME['hover_bg'],
                         'font': {'size': 13},
                         'align': 'right',
                         'namelength': -1
@@ -373,13 +383,13 @@ def register_chart_callbacks(app: Dash) -> None:
                     'dragmode': 'zoom',
                     'modebar': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'color': THEME['dark']['text_color'],
-                        'activecolor': THEME['dark']['text_color']
+                        'color': THEME['text_primary'],
+                        'activecolor': THEME['text_primary']
                     },
                     'legend': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'font': {'color': THEME['dark']['text_color']},
-                        'bordercolor': THEME['dark']['grid_color'],
+                        'font': {'color': THEME['text_primary']},
+                        'bordercolor': THEME['border'],
                         'borderwidth': 1
                     },
                     'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}

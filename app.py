@@ -8,19 +8,27 @@ from frontend.callbacks.chart import register_chart_callbacks
 from frontend.callbacks.data import register_data_callbacks
 from frontend.callbacks.settings import register_settings_callbacks, load_app_state
 from frontend.components.settings_modal import create_settings_modal, THEMES, THEME_URLS
-from config.settings import TICKER_LISTS
+from config.settings import TICKER_LISTS, THEME
 
 # Load saved state and get initial theme
 app_state = load_app_state()
+print("Loaded app_state:", app_state.get('theme'))
 initial_theme = THEME_URLS['DARKLY']  # Default theme
+print("Default theme:", initial_theme)
 
 if app_state.get('theme'):
     saved_theme = app_state['theme']
+    print("Found saved theme:", saved_theme)
     # Validate that the saved theme is in our list of available themes
-    if any(theme['value'] == saved_theme for theme in THEMES):
+    available_themes = [theme['value'] for theme in THEMES]
+    print("Available themes:", available_themes)
+    if saved_theme in available_themes:
         initial_theme = saved_theme
+        print("Using saved theme:", initial_theme)
     else:
         print(f"Saved theme {saved_theme} not found in available themes, using default")
+else:
+    print("No saved theme found, using default")
 
 # Initialize the Dash app
 app = Dash(
@@ -136,17 +144,21 @@ app.layout = html.Div([
                     color="primary",
                     className="w-100 mb-3"
                 )
-            ], id="sidebar-container", width=3, className="p-4 border-end"),
+            ], width=3, className="p-4", style={
+                "backgroundColor": THEME['sidebar_bg'],
+                "height": "100vh",
+                "overflowY": "auto",
+                "borderRight": f"1px solid {THEME['border']}"
+            }),
             
-            # Main Content
+            # Main content
             dbc.Col([
-                # Resizable container
+                # Chart container
                 html.Div([
                     # Chart wrapper
                     html.Div([
-                        # Chart
                         dcc.Graph(
-                            id='price-chart',
+                            id='chart',
                             style={
                                 "height": "100%",
                                 "width": "100%"
@@ -159,14 +171,16 @@ app.layout = html.Div([
                                 'displaylogo': False
                             }
                         )
-                    ], id="chart-wrapper", style={
+                    ], style={
                         "height": "100%",
                         "width": "100%",
-                        "padding": "1.5rem",
-                        "borderRadius": "8px",
-                        "boxShadow": "0 0 10px rgba(0,0,0,0.2)"
+                        "backgroundColor": THEME['chart_inner_bg'],
+                        "borderRadius": "10px",
+                        "padding": "1rem",
+                        "border": f"1px solid {THEME['border']}"
                     })
                 ], id="chart-container", style={
+                    "position": "relative",
                     "resize": "both",
                     "overflow": "hidden",
                     "minHeight": "400px",
@@ -174,16 +188,32 @@ app.layout = html.Div([
                     "height": "80vh",
                     "width": "100%",
                     "margin": "1rem",
+                    "backgroundColor": THEME['chart_outer_bg'],
                     "borderRadius": "10px",
-                    "padding": "1px"
+                    "border": f"1px solid {THEME['border']}"
                 })
-            ], width=9, className="p-4")
-        ], style={"margin": "0", "height": "100vh"})
-    ], fluid=True, style={"height": "100vh", "padding": "0"}),
+            ], width=9, className="p-4", style={
+                "backgroundColor": THEME['page_bg'],
+                "height": "100vh",
+                "overflowY": "auto"
+            })
+        ], style={
+            "margin": "0",
+            "height": "100vh"
+        })
+    ], fluid=True, style={
+        "height": "100vh",
+        "padding": "0",
+        "backgroundColor": THEME['page_bg']
+    }),
     
     # Settings modal
     create_settings_modal()
-], id="main-container", style={"height": "100vh", "overflow": "hidden"})
+], id="main-container", style={
+    "height": "100vh",
+    "overflow": "hidden",
+    "backgroundColor": THEME['page_bg']
+})
 
 # Register callbacks
 register_chart_callbacks(app)

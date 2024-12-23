@@ -15,7 +15,19 @@ COLOR_SCHEMES = {
         # UI elements
         'border': '#333333',
         'grid': '#333333',
-        'hover_bg': '#111111',
+        'hover_bg': 'rgba(17, 17, 17, 0.95)',
+        'button_bg': '#1E1E1E',
+        'button_hover': '#2A2A2A',
+        'input_bg': '#1E1E1E',
+        'input_border': '#333333',
+        'input_text': '#FFFFFF',
+        'dropdown_bg': '#1E1E1E',
+        'dropdown_hover': '#2A2A2A',
+        'dropdown_border': '#333333',
+        'dropdown_text': '#FFFFFF',
+        'switch_bg': '#1E1E1E',
+        'switch_active': '#0D6EFD',
+        'switch_hover': '#2A2A2A',
         
         # Chart colors
         'chart_colors': [
@@ -45,7 +57,19 @@ COLOR_SCHEMES = {
         # UI elements
         'border': '#DEE2E6',
         'grid': '#E9ECEF',
-        'hover_bg': '#FFFFFF',
+        'hover_bg': 'rgba(255, 255, 255, 0.95)',
+        'button_bg': '#F8F9FA',
+        'button_hover': '#E9ECEF',
+        'input_bg': '#FFFFFF',
+        'input_border': '#DEE2E6',
+        'input_text': '#000000',
+        'dropdown_bg': '#FFFFFF',
+        'dropdown_hover': '#E9ECEF',
+        'dropdown_border': '#DEE2E6',
+        'dropdown_text': '#000000',
+        'switch_bg': '#F8F9FA',
+        'switch_active': '#0D6EFD',
+        'switch_hover': '#E9ECEF',
         
         # Chart colors - same as dark theme for consistency
         'chart_colors': [
