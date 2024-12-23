@@ -6,6 +6,7 @@ from dash import Dash, Input, Output, State, callback_context
 from dash.exceptions import PreventUpdate
 
 from backend.data.manager import DataManager
+from config.settings import TICKER_LISTS
 
 
 def register_data_callbacks(app: Dash) -> None:
@@ -13,62 +14,87 @@ def register_data_callbacks(app: Dash) -> None:
     
     data_manager = DataManager()
     
+    # Create a flat list of all tickers with their categories
+    all_tickers = []
+    for category, tickers in TICKER_LISTS.items():
+        for ticker in tickers:
+            all_tickers.append({
+                'label': f"{ticker} ({category})",
+                'value': ticker
+            })
+    
     @app.callback(
-        [
-            Output('ticker-dropdown', 'options'),
-            Output('error-message', 'children')
-        ],
-        [Input('ticker-dropdown', 'search_value')],
-        [State('error-message', 'children')]
+        Output('ticker-dropdown', 'value'),
+        [Input('category-dropdown', 'value')],
+        [State('ticker-dropdown', 'value')]
     )
-    def update_ticker_options(
-        search_value: str,
-        current_error: str
-    ) -> Tuple[List[Dict], str]:
-        """Update ticker dropdown options based on search."""
-        if not search_value:
-            return [], current_error
+    def update_selected_tickers(category: str, current_tickers: List[str]) -> List[str]:
+        """Update selected tickers based on category selection."""
+        if not category:
+            raise PreventUpdate
             
-        try:
-            # For now, just validate the searched ticker
-            # In a real app, you might want to search a predefined list
-            # or use an API to search for tickers
-            search_ticker = search_value.upper()
-            valid = data_manager.validate_tickers([search_ticker])
-            
-            if valid.get(search_ticker):
-                return [{'label': search_ticker, 'value': search_ticker}], ""
-            return [], f"Invalid ticker: {search_ticker}"
-            
-        except Exception as e:
-            print(f"Error validating ticker: {str(e)}")
-            return [], f"Error validating ticker: {str(e)}"
+        # Get tickers for selected category
+        category_tickers = TICKER_LISTS[category]
+        
+        # Combine with current tickers, removing duplicates
+        current_tickers = current_tickers or []
+        return list(set(current_tickers + category_tickers))
     
     @app.callback(
         [
+            Output('ticker-dropdown', 'options'),
             Output('date-range', 'min_date_allowed'),
             Output('date-range', 'max_date_allowed'),
             Output('date-range', 'start_date'),
-            Output('date-range', 'end_date')
+            Output('date-range', 'end_date'),
+            Output('error-message', 'children')
         ],
-        [Input('ticker-dropdown', 'value')]
+        [
+            Input('ticker-dropdown', 'search_value'),
+            Input('ticker-dropdown', 'value')
+        ]
     )
-    def update_date_range(tickers: List[str]) -> tuple:
-        """Update date range based on available data."""
-        if not tickers:
-            raise PreventUpdate
+    def update_data_controls(search_value: str, selected_tickers: List[str]) -> tuple:
+        """Update data controls based on user input."""
+        ctx = callback_context
+        trigger_id = ctx.triggered[0]['prop_id'] if ctx.triggered else None
+        
+        # Initialize default values
+        options = all_tickers
+        error_msg = ""
+        from datetime import datetime, timedelta
+        end = datetime.now()
+        start = end - timedelta(days=365)
         
         try:
-            from datetime import datetime, timedelta
+            # Filter options based on search value
+            if trigger_id == 'ticker-dropdown.search_value' and search_value:
+                search_upper = search_value.upper()
+                options = [
+                    opt for opt in all_tickers
+                    if search_upper in opt['value'].upper() or search_upper in opt['label'].upper()
+                ]
             
-            # For now, use a fixed date range
-            # In a real app, you might want to query the database
-            # to find the actual date range of available data
-            end = datetime.now()
-            start = end - timedelta(days=365)
+            # Handle date range update
+            if trigger_id == 'ticker-dropdown.value' and not selected_tickers:
+                raise PreventUpdate
             
-            return start.date(), end.date(), start.date(), end.date()
+            return (
+                options,
+                start.date(),
+                end.date(),
+                start.date(),
+                end.date(),
+                error_msg
+            )
             
         except Exception as e:
-            print(f"Error updating date range: {str(e)}")
-            raise PreventUpdate
+            print(f"Error in data controls: {str(e)}")
+            return (
+                options,
+                start.date(),
+                end.date(),
+                start.date(),
+                end.date(),
+                f"Error: {str(e)}"
+            )

@@ -3,7 +3,7 @@
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from config.settings import APP_CONFIG, THEME
+from config.settings import APP_CONFIG, THEME, TICKER_LISTS
 
 # Initialize the Dash app
 app = dash.Dash(
@@ -29,6 +29,17 @@ app.layout = dbc.Container([
             dbc.Card([
                 dbc.CardBody([
                     html.H4("Controls", className="card-title"),
+                    # Category selection
+                    html.Label("Quick Add by Category"),
+                    dcc.Dropdown(
+                        id='category-dropdown',
+                        options=[
+                            {'label': category, 'value': category}
+                            for category in TICKER_LISTS.keys()
+                        ],
+                        placeholder="Select a category",
+                        className="mb-3"
+                    ),
                     # Ticker selection
                     html.Label("Select Tickers"),
                     dcc.Dropdown(

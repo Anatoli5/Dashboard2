@@ -1,6 +1,6 @@
 """Chart-related callbacks."""
 
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from datetime import datetime, timedelta
 import pandas as pd
 from dash import Dash, Input, Output, State, callback_context
@@ -17,10 +17,7 @@ def register_chart_callbacks(app: Dash) -> None:
     data_manager = DataManager()
     
     @app.callback(
-        [
-            Output('price-chart', 'figure'),
-            Output('error-message', 'children')
-        ],
+        Output('price-chart', 'figure'),
         [
             Input('ticker-dropdown', 'value'),
             Input('interval-dropdown', 'value'),
@@ -37,11 +34,8 @@ def register_chart_callbacks(app: Dash) -> None:
         end_date: str,
         n_clicks: int,
         current_figure: Dict
-    ) -> Tuple[Dict, str]:
+    ) -> Dict:
         """Update the price chart."""
-        # Initialize error message
-        error_msg = ""
-        
         # Check if callback was triggered
         if not callback_context.triggered:
             raise PreventUpdate
@@ -60,7 +54,7 @@ def register_chart_callbacks(app: Dash) -> None:
                     'paper_bgcolor': THEME['dark']['bg_color'],
                     'plot_bgcolor': THEME['dark']['plot_bg_color']
                 }
-            }, ""
+            }
         
         try:
             # Convert dates
@@ -85,24 +79,21 @@ def register_chart_callbacks(app: Dash) -> None:
             # Create traces
             traces = []
             for ticker, df in ticker_data.items():
-                if df.empty:
-                    error_msg += f"No data available for {ticker}. "
-                    continue
-                    
-                traces.append(
-                    go.Scatter(
-                        x=df.index,
-                        y=df['close'],
-                        name=ticker,
-                        mode='lines',
-                        hovertemplate=(
-                            f"{ticker}<br>"
-                            "Date: %{x}<br>"
-                            "Close: %{y:.2f}<br>"
-                            "<extra></extra>"
+                if not df.empty:
+                    traces.append(
+                        go.Scatter(
+                            x=df.index,
+                            y=df['close'],
+                            name=ticker,
+                            mode='lines',
+                            hovertemplate=(
+                                f"{ticker}<br>"
+                                "Date: %{x}<br>"
+                                "Close: %{y:.2f}<br>"
+                                "<extra></extra>"
+                            )
                         )
                     )
-                )
             
             if not traces:
                 return {
@@ -113,7 +104,7 @@ def register_chart_callbacks(app: Dash) -> None:
                         'template': 'plotly_dark',
                         'height': 600
                     }
-                }, error_msg
+                }
             
             # Create figure
             figure = {
@@ -141,16 +132,16 @@ def register_chart_callbacks(app: Dash) -> None:
                 }
             }
             
-            return figure, error_msg
+            return figure
             
         except Exception as e:
             print(f"Error updating chart: {str(e)}")
             return current_figure or {
                 'data': [],
                 'layout': {
-                    'title': 'Error loading data',
+                    'title': f'Error: {str(e)}',
                     'showlegend': True,
                     'template': 'plotly_dark',
                     'height': 600
                 }
-            }, f"Error: {str(e)}"
+            }

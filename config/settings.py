@@ -36,6 +36,25 @@ DATA_SETTINGS = {
     'default_provider': 'yahoo',
     'cache_timeout': 300,  # 5 minutes
     'default_interval': '1d',
+    'api_keys': {
+        'alphavantage': os.getenv('ALPHA_VANTAGE_API_KEY')
+    }
+}
+
+# Predefined ticker lists
+TICKER_LISTS = {
+    'Popular Stocks': [
+        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA', 'JPM',
+        'V', 'WMT', 'DIS', 'NFLX', 'PYPL', 'INTC', 'AMD'
+    ],
+    'Crypto': [
+        'BTC-USD', 'ETH-USD', 'USDT-USD', 'BNB-USD', 'XRP-USD',
+        'ADA-USD', 'DOGE-USD', 'SOL-USD'
+    ],
+    'ETFs': [
+        'SPY', 'QQQ', 'IWM', 'VTI', 'VOO', 'VEA', 'VWO',
+        'BND', 'VNQ', 'GLD'
+    ]
 }
 
 # Database settings
