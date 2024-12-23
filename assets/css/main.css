@@ -1,0 +1,244 @@
+/* Main container styles */
+.app-container {
+    padding: 1rem;
+    height: 100vh;
+    background-color: var(--bs-dark);
+}
+
+/* Sidebar styles */
+.sidebar {
+    height: 100%;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+}
+
+/* Chart container styles */
+.chart-container {
+    height: calc(100vh - 200px);
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Info container styles */
+.info-container {
+    height: 100px;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+}
+
+/* Dark Dropdown Theme */
+.dash-dropdown-dark .Select-control {
+    background-color: #1a1a1a !important;
+    border-color: #444 !important;
+    color: white !important;
+}
+
+.dash-dropdown-dark .Select-menu-outer {
+    background-color: #1a1a1a !important;
+    border: 1px solid #444 !important;
+}
+
+.dash-dropdown-dark .Select-option {
+    background-color: #1a1a1a !important;
+    color: white !important;
+    cursor: pointer !important;
+}
+
+.dash-dropdown-dark .Select-option.is-focused {
+    background-color: #333 !important;
+}
+
+.dash-dropdown-dark .Select-option.is-selected {
+    background-color: #444 !important;
+}
+
+.dash-dropdown-dark .Select-value {
+    color: white !important;
+}
+
+.dash-dropdown-dark .Select-placeholder {
+    color: #888 !important;
+}
+
+.dash-dropdown-dark .Select-multi-value-wrapper {
+    background-color: #1a1a1a !important;
+}
+
+.dash-dropdown-dark .Select-value-label {
+    color: white !important;
+}
+
+.dash-dropdown-dark .Select-value-icon {
+    color: white !important;
+    border-right: 1px solid #444 !important;
+}
+
+.dash-dropdown-dark .Select-value-icon:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.dash-dropdown-dark .Select-input > input {
+    color: white !important;
+}
+
+.dash-dropdown-dark .Select-arrow-zone {
+    color: #888 !important;
+}
+
+.dash-dropdown-dark .Select-arrow-zone:hover {
+    color: white !important;
+}
+
+.dash-dropdown-dark .Select-arrow {
+    border-color: #888 transparent transparent !important;
+}
+
+.dash-dropdown-dark .is-open .Select-arrow {
+    border-color: transparent transparent #888 !important;
+}
+
+.dash-dropdown-dark .Select.is-focused:not(.is-open) > .Select-control {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* DatePicker styling */
+.DateInput {
+    background-color: transparent !important;
+}
+
+.DateInput_input {
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+    border-color: var(--bs-gray-700) !important;
+}
+
+.SingleDatePickerInput, .DateRangePickerInput {
+    background-color: var(--bs-dark) !important;
+    border-color: var(--bs-gray-700) !important;
+}
+
+/* Plotly modebar styling */
+.modebar-container {
+    background-color: transparent !important;
+}
+
+.modebar {
+    background-color: transparent !important;
+}
+
+.modebar-btn {
+    color: var(--bs-light) !important;
+    background: var(--bs-dark) !important;
+}
+
+.modebar-btn:hover {
+    color: var(--bs-primary) !important;
+    background: var(--bs-gray-700) !important;
+}
+
+.modebar-btn.active {
+    background: var(--bs-gray-700) !important;
+}
+
+.modebar-btn svg {
+    fill: currentColor !important;
+}
+
+/* Export button override */
+.modebar-btn[data-title="Download plot as a png"] {
+    background: var(--bs-dark) !important;
+    border: 1px solid var(--bs-gray-700) !important;
+}
+
+.modebar-btn[data-title="Download plot as a png"]:hover {
+    background: var(--bs-gray-700) !important;
+}
+
+/* Labels */
+label {
+    color: var(--bs-light) !important;
+}
+
+/* Calendar styling */
+.CalendarMonth {
+    background-color: var(--bs-dark) !important;
+}
+
+.CalendarMonth_caption {
+    color: var(--bs-light) !important;
+}
+
+.CalendarDay {
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+    border: 1px solid var(--bs-gray-700) !important;
+}
+
+.CalendarDay:hover {
+    background-color: var(--bs-gray-700) !important;
+    border: 1px solid var(--bs-gray-600) !important;
+}
+
+.CalendarDay__selected {
+    background-color: var(--bs-primary) !important;
+    border: 1px solid var(--bs-primary) !important;
+}
+
+.CalendarDay__selected:hover {
+    background-color: var(--bs-primary) !important;
+    color: var(--bs-light) !important;
+}
+
+.DayPickerNavigation_button {
+    background-color: var(--bs-dark) !important;
+    border: 1px solid var(--bs-gray-700) !important;
+}
+
+.DayPickerNavigation_button:hover {
+    background-color: var(--bs-gray-700) !important;
+}
+
+/* Dash debug menu styling - updated selectors */
+#_dash-global-error-container {
+    background-color: var(--bs-dark) !important;
+}
+
+/* Target the debug menu container */
+div[id*='_dash-app-content'] ._dash-undo-redo {
+    background: var(--bs-dark) !important;
+    border: 1px solid var(--bs-gray-700) !important;
+    border-radius: 4px !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 1000 !important;
+}
+
+/* Target the debug menu buttons */
+div[id*='_dash-app-content'] ._dash-undo-redo button {
+    background: var(--bs-dark) !important;
+    color: var(--bs-light) !important;
+    border: none !important;
+    padding: 8px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+}
+
+/* Target the debug menu buttons on hover */
+div[id*='_dash-app-content'] ._dash-undo-redo button:hover {
+    background: var(--bs-gray-700) !important;
+    color: var(--bs-primary) !important;
+}
+
+/* Hide the debug menu completely if needed */
+/*
+._dash-undo-redo {
+    display: none !important;
+}
+*/ 

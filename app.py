@@ -1,18 +1,30 @@
 """Main application entry point."""
 
 import os
+import json
 from dash import Dash, html, dcc, Input, Output
 import dash_bootstrap_components as dbc
 from frontend.callbacks.chart import register_chart_callbacks
 from frontend.callbacks.data import register_data_callbacks
-from frontend.callbacks.settings import register_settings_callbacks
-from frontend.components.settings_modal import create_settings_modal
+from frontend.callbacks.settings import register_settings_callbacks, load_app_state
+from frontend.components.settings_modal import create_settings_modal, THEMES, THEME_URLS
 from config.settings import TICKER_LISTS
 
-# Initialize the Dash app with Bootstrap dark theme
+# Load saved state and get initial theme
+app_state = load_app_state()
+initial_theme = THEME_URLS['DARKLY']  # Default theme
+
+if app_state.get('theme'):
+    saved_theme = app_state['theme']
+    # Validate that the saved theme is in our list of available themes
+    if any(theme['value'] == saved_theme for theme in THEMES):
+        initial_theme = saved_theme
+    else:
+        print(f"Saved theme {saved_theme} not found in available themes, using default")
+
+# Initialize the Dash app
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.DARKLY],
     suppress_callback_exceptions=True,
     update_title=None
 )
@@ -22,6 +34,9 @@ app.title = "Financial Dashboard"
 
 # App layout
 app.layout = html.Div([
+    # Theme stylesheet
+    html.Link(id="theme-stylesheet", rel="stylesheet", href=initial_theme),
+    
     # Main layout
     dbc.Container([
         dbc.Row([
@@ -174,28 +189,6 @@ app.layout = html.Div([
 register_chart_callbacks(app)
 register_data_callbacks(app)
 register_settings_callbacks(app)
-
-# Add Font Awesome for icons
-app.index_string = '''
-<!DOCTYPE html>
-<html>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-'''
 
 if __name__ == '__main__':
     # Get port from environment or use default
