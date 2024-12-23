@@ -1,29 +1,51 @@
 """Main application entry point."""
 
 import os
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, Input, Output
 import dash_bootstrap_components as dbc
 from frontend.callbacks.chart import register_chart_callbacks
 from frontend.callbacks.data import register_data_callbacks
-from config.settings import THEME, TICKER_LISTS
+from frontend.callbacks.settings import register_settings_callbacks
+from frontend.components.settings_modal import create_settings_modal
+from config.settings import TICKER_LISTS
 
 # Initialize the Dash app with Bootstrap dark theme
 app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.DARKLY],
-    suppress_callback_exceptions=True
+    suppress_callback_exceptions=True,
+    update_title=None
 )
 
 # Configure the app
 app.title = "Financial Dashboard"
 
 # App layout
-app.layout = html.Div([  # Wrapper div with fixed height
+app.layout = html.Div([
+    # Main layout
     dbc.Container([
         dbc.Row([
             # Sidebar
             dbc.Col([
-                html.H4("Controls", className="mb-3"),
+                # Header with settings
+                html.Div([
+                    html.H4("Controls", className="mb-0"),
+                    dbc.Button(
+                        "⋮",  # Three dots menu icon
+                        id="settings-open",
+                        color="link",
+                        className="p-0 ms-auto",
+                        style={
+                            "fontSize": "24px",
+                            "textDecoration": "none",
+                            "backgroundColor": "transparent",
+                            "border": "none",
+                            "boxShadow": "none",
+                            "transition": "color 0.2s ease",
+                            "cursor": "pointer"
+                        }
+                    )
+                ], className="d-flex align-items-center mb-3"),
                 
                 # Category Dropdown
                 html.Label("Add Category", className="mb-2"),
@@ -31,7 +53,7 @@ app.layout = html.Div([  # Wrapper div with fixed height
                     id='category-dropdown',
                     options=[{'label': cat, 'value': cat} for cat in TICKER_LISTS.keys()],
                     placeholder="Select a category to add tickers",
-                    className="mb-3",
+                    className="mb-3 dash-dropdown-dark",
                     persistence=True,
                     persistence_type='local'
                 ),
@@ -42,7 +64,7 @@ app.layout = html.Div([  # Wrapper div with fixed height
                     id='ticker-dropdown',
                     multi=True,
                     placeholder="Search and select tickers",
-                    className="mb-3",
+                    className="mb-3 dash-dropdown-dark",
                     persistence=True,
                     persistence_type='local'
                 ),
@@ -57,7 +79,7 @@ app.layout = html.Div([  # Wrapper div with fixed height
                         {'label': '1 Month', 'value': '1mo'}
                     ],
                     value='1d',
-                    className="mb-3",
+                    className="mb-3 dash-dropdown-dark",
                     persistence=True,
                     persistence_type='local'
                 ),
@@ -99,50 +121,81 @@ app.layout = html.Div([  # Wrapper div with fixed height
                     color="primary",
                     className="w-100 mb-3"
                 )
-            ], width=3, className="bg-dark p-4 border-end", style={"height": "100vh", "overflow-y": "auto"}),
+            ], id="sidebar-container", width=3, className="p-4 border-end"),
             
             # Main Content
             dbc.Col([
-                # Chart container with fixed height
+                # Resizable container
                 html.Div([
-                    # Loading overlay
-                    dbc.Spinner(
-                        html.Div(id="loading-chart"),
-                        type="border",
-                        color="primary",
-                        spinner_style={
-                            "position": "absolute",
-                            "top": "50%",
-                            "left": "50%",
-                            "transform": "translate(-50%, -50%)",
-                            "zIndex": "1000"
-                        }
-                    ),
-                    # Chart
-                    dcc.Graph(
-                        id='price-chart',
-                        style={"height": "calc(100vh - 2rem)"},  # Full height minus padding
-                        config={
-                            'scrollZoom': True,
-                            'showTips': True,
-                            'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
-                            'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                            'displaylogo': False
-                        }
-                    )
-                ], style={
-                    "position": "relative",
-                    "height": "calc(100vh - 2rem)",  # Full height minus padding
-                    "margin": "1rem 0"
+                    # Chart wrapper
+                    html.Div([
+                        # Chart
+                        dcc.Graph(
+                            id='price-chart',
+                            style={
+                                "height": "100%",
+                                "width": "100%"
+                            },
+                            config={
+                                'scrollZoom': True,
+                                'showTips': True,
+                                'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
+                                'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                                'displaylogo': False
+                            }
+                        )
+                    ], id="chart-wrapper", style={
+                        "height": "100%",
+                        "width": "100%",
+                        "padding": "1.5rem",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 0 10px rgba(0,0,0,0.2)"
+                    })
+                ], id="chart-container", style={
+                    "resize": "both",
+                    "overflow": "hidden",
+                    "minHeight": "400px",
+                    "minWidth": "600px",
+                    "height": "80vh",
+                    "width": "100%",
+                    "margin": "1rem",
+                    "borderRadius": "10px",
+                    "padding": "1px"
                 })
-            ], width=9, className="p-4", style={"height": "100vh", "overflow": "hidden"})
+            ], width=9, className="p-4")
         ], style={"margin": "0", "height": "100vh"})
-    ], fluid=True, style={"height": "100vh", "padding": "0"})
-], style={"height": "100vh", "overflow": "hidden"})
+    ], fluid=True, style={"height": "100vh", "padding": "0"}),
+    
+    # Settings modal
+    create_settings_modal()
+], id="main-container", style={"height": "100vh", "overflow": "hidden"})
 
 # Register callbacks
 register_chart_callbacks(app)
 register_data_callbacks(app)
+register_settings_callbacks(app)
+
+# Add Font Awesome for icons
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 if __name__ == '__main__':
     # Get port from environment or use default

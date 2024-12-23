@@ -14,21 +14,6 @@ from core.state_manager import StateManager
 from config.settings import THEME
 
 
-# Custom color sequence from original project
-COLORS = [
-    '#2E91E5',  # Blue
-    '#E15F99',  # Pink
-    '#1CA71C',  # Green
-    '#FB0D0D',  # Red
-    '#DA16FF',  # Purple
-    '#B68100',  # Brown
-    '#EB663B',  # Orange
-    '#511CFB',  # Indigo
-    '#00CED1',  # Dark Turquoise
-    '#FFD700',  # Gold
-]
-
-
 def normalize_data(df: pd.DataFrame, click_point: Dict = None) -> pd.DataFrame:
     """Normalize data based on click point or start."""
     if df.empty:
@@ -160,7 +145,7 @@ def register_chart_callbacks(app: Dash) -> None:
             traces = []
             for i, (ticker, df) in enumerate(ticker_data.items()):
                 if not df.empty:
-                    color = COLORS[i % len(COLORS)]
+                    color = THEME['chart_colors'][i % len(THEME['chart_colors'])]
                     # Get the close prices
                     close_prices = df['close']
                     
@@ -185,7 +170,7 @@ def register_chart_callbacks(app: Dash) -> None:
                                 "<extra></extra>"
                             ),
                             hoverlabel=dict(
-                                bgcolor='rgba(0, 0, 0, 0.5)',
+                                bgcolor=THEME['hover_bg'],
                                 bordercolor=color,
                                 font=dict(
                                     color=color,
@@ -211,7 +196,7 @@ def register_chart_callbacks(app: Dash) -> None:
                                 "<extra></extra>"
                             ),
                             hoverlabel=dict(
-                                bgcolor='rgba(0, 0, 0, 0.5)',
+                                bgcolor=THEME['hover_bg'],
                                 bordercolor=color,
                                 font=dict(
                                     color=color,
@@ -229,10 +214,53 @@ def register_chart_callbacks(app: Dash) -> None:
                         'title': 'No data available for selected tickers',
                         'showlegend': True,
                         'template': 'plotly_dark',
-                        'height': 600,
+                        'xaxis': {
+                            'title': 'Date',
+                            'rangeslider': {'visible': False},
+                            'showgrid': True,
+                            'gridcolor': '#333',
+                            'domain': [0, 1],
+                            'color': THEME['dark']['text_color']
+                        },
+                        'yaxis': {
+                            'title': 'Normalized Price (%)' if normalize else 'Price',
+                            'showgrid': True,
+                            'gridcolor': '#333',
+                            'type': 'log' if log_scale else 'linear',
+                            'side': 'left',
+                            'color': THEME['dark']['text_color']
+                        },
+                        'yaxis2': {
+                            'title': 'Volume',
+                            'showgrid': False,
+                            'side': 'right',
+                            'overlaying': 'y',
+                            'color': THEME['dark']['text_color']
+                        },
                         'paper_bgcolor': THEME['dark']['bg_color'],
-                        'plot_bgcolor': THEME['dark']['plot_bg_color'],
-                        'font': {'color': THEME['dark']['text_color']}
+                        'plot_bgcolor': 'rgba(0,0,0,0)',
+                        'font': {'color': THEME['dark']['text_color']},
+                        'hovermode': 'closest',
+                        'hoverdistance': 50,
+                        'hoverlabel': {
+                            'bgcolor': '#111111',
+                            'font': {'size': 13},
+                            'align': 'right',
+                            'namelength': -1
+                        },
+                        'dragmode': 'zoom',
+                        'modebar': {
+                            'bgcolor': 'rgba(0,0,0,0)',
+                            'color': THEME['dark']['text_color'],
+                            'activecolor': THEME['dark']['text_color']
+                        },
+                        'legend': {
+                            'bgcolor': 'rgba(0,0,0,0)',
+                            'font': {'color': THEME['dark']['text_color']},
+                            'bordercolor': THEME['dark']['grid_color'],
+                            'borderwidth': 1
+                        },
+                        'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
                     }
                 }
             
@@ -244,55 +272,54 @@ def register_chart_callbacks(app: Dash) -> None:
                         'text': 'Normalized Price Chart (Click to change base point)' if normalize else 'Price Chart',
                         'x': 0.5,
                         'xanchor': 'center',
-                        'font': {'color': THEME['dark']['text_color']}
+                        'font': {'color': THEME['text_primary']}
                     },
                     'showlegend': True,
                     'template': 'plotly_dark',
-                    'height': 600,
                     'xaxis': {
                         'title': 'Date',
                         'rangeslider': {'visible': False},
                         'showgrid': True,
-                        'gridcolor': THEME['dark']['grid_color'],
+                        'gridcolor': THEME['grid'],
                         'domain': [0, 1],
-                        'color': THEME['dark']['text_color']
+                        'color': THEME['text_primary']
                     },
                     'yaxis': {
                         'title': 'Normalized Price (%)' if normalize else 'Price',
                         'showgrid': True,
-                        'gridcolor': THEME['dark']['grid_color'],
+                        'gridcolor': THEME['grid'],
                         'type': 'log' if log_scale else 'linear',
                         'side': 'left',
-                        'color': THEME['dark']['text_color']
+                        'color': THEME['text_primary']
                     },
                     'yaxis2': {
                         'title': 'Volume',
                         'showgrid': False,
                         'side': 'right',
                         'overlaying': 'y',
-                        'color': THEME['dark']['text_color']
+                        'color': THEME['text_primary']
                     },
-                    'paper_bgcolor': THEME['dark']['bg_color'],
-                    'plot_bgcolor': THEME['dark']['plot_bg_color'],
-                    'font': {'color': THEME['dark']['text_color']},
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': {'color': THEME['text_primary']},
                     'hovermode': 'closest',
                     'hoverdistance': 50,
                     'hoverlabel': {
-                        'bgcolor': 'rgba(0, 0, 0, 0.5)',
-                        'font': dict(
-                            size=13
-                        )
+                        'bgcolor': THEME['hover_bg'],
+                        'font': {'size': 13},
+                        'align': 'right',
+                        'namelength': -1
                     },
                     'dragmode': 'zoom',
                     'modebar': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'color': THEME['dark']['text_color'],
-                        'activecolor': THEME['dark']['text_color']
+                        'color': THEME['text_primary'],
+                        'activecolor': THEME['text_primary']
                     },
                     'legend': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'font': {'color': THEME['dark']['text_color']},
-                        'bordercolor': THEME['dark']['grid_color'],
+                        'font': {'color': THEME['text_primary']},
+                        'bordercolor': THEME['border'],
                         'borderwidth': 1
                     },
                     'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
@@ -309,9 +336,52 @@ def register_chart_callbacks(app: Dash) -> None:
                     'title': f'Error: {str(e)}',
                     'showlegend': True,
                     'template': 'plotly_dark',
-                    'height': 600,
+                    'xaxis': {
+                        'title': 'Date',
+                        'rangeslider': {'visible': False},
+                        'showgrid': True,
+                        'gridcolor': '#333',
+                        'domain': [0, 1],
+                        'color': THEME['dark']['text_color']
+                    },
+                    'yaxis': {
+                        'title': 'Normalized Price (%)' if normalize else 'Price',
+                        'showgrid': True,
+                        'gridcolor': '#333',
+                        'type': 'log' if log_scale else 'linear',
+                        'side': 'left',
+                        'color': THEME['dark']['text_color']
+                    },
+                    'yaxis2': {
+                        'title': 'Volume',
+                        'showgrid': False,
+                        'side': 'right',
+                        'overlaying': 'y',
+                        'color': THEME['dark']['text_color']
+                    },
                     'paper_bgcolor': THEME['dark']['bg_color'],
-                    'plot_bgcolor': THEME['dark']['plot_bg_color'],
-                    'font': {'color': THEME['dark']['text_color']}
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': {'color': THEME['dark']['text_color']},
+                    'hovermode': 'closest',
+                    'hoverdistance': 50,
+                    'hoverlabel': {
+                        'bgcolor': '#111111',
+                        'font': {'size': 13},
+                        'align': 'right',
+                        'namelength': -1
+                    },
+                    'dragmode': 'zoom',
+                    'modebar': {
+                        'bgcolor': 'rgba(0,0,0,0)',
+                        'color': THEME['dark']['text_color'],
+                        'activecolor': THEME['dark']['text_color']
+                    },
+                    'legend': {
+                        'bgcolor': 'rgba(0,0,0,0)',
+                        'font': {'color': THEME['dark']['text_color']},
+                        'bordercolor': THEME['dark']['grid_color'],
+                        'borderwidth': 1
+                    },
+                    'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
                 }
             }
