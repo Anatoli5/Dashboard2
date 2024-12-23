@@ -117,3 +117,23 @@ def register_data_callbacks(app: Dash) -> None:
             log_scale,
             normalize
         )
+    
+    @app.callback(
+        Output('loading-chart', 'children'),
+        [
+            Input('ticker-dropdown', 'value'),
+            Input('interval-dropdown', 'value'),
+            Input('update-button', 'n_clicks')
+        ]
+    )
+    def show_loading(tickers: List[str], interval: str, n_clicks: int) -> str:
+        """Show loading spinner when data is being fetched."""
+        ctx = callback_context
+        if not ctx.triggered:
+            raise PreventUpdate
+            
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        if trigger_id in ['ticker-dropdown', 'interval-dropdown', 'update-button']:
+            return "Loading..."
+            
+        return ""

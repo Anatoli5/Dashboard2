@@ -117,6 +117,7 @@ def register_chart_callbacks(app: Dash) -> None:
                     'yaxis': {'showgrid': True},
                     'paper_bgcolor': THEME['dark']['bg_color'],
                     'plot_bgcolor': THEME['dark']['plot_bg_color'],
+                    'font': {'color': THEME['dark']['text_color']},
                     'annotations': [{
                         'text': 'Use the controls on the left to select tickers',
                         'xref': 'paper',
@@ -178,10 +179,18 @@ def register_chart_callbacks(app: Dash) -> None:
                                 width=2
                             ),
                             hovertemplate=(
-                                f"{ticker}<br>"
-                                "Date: %{x}<br>" +
-                                ("Normalized: %{y:.1f}%<br>" if normalize else "Price: %{y:.2f}<br>") +
+                                f"<b>{ticker}</b><br>" +
+                                "%{x}<br>" +
+                                ("Value: %{y:.1f}%<br>" if normalize else "Price: %{y:.2f}<br>") +
                                 "<extra></extra>"
+                            ),
+                            hoverlabel=dict(
+                                bgcolor='rgba(0, 0, 0, 0.5)',
+                                bordercolor=color,
+                                font=dict(
+                                    color=color,
+                                    size=13
+                                )
                             )
                         )
                     )
@@ -196,10 +205,18 @@ def register_chart_callbacks(app: Dash) -> None:
                             marker_color=color,
                             opacity=0.3,
                             hovertemplate=(
-                                f"{ticker} Volume<br>"
-                                "Date: %{x}<br>"
-                                "Volume: %{y:,.0f}<br>"
+                                f"<b>{ticker} Volume</b><br>" +
+                                "%{x}<br>" +
+                                "Volume: %{y:,.0f}<br>" +
                                 "<extra></extra>"
+                            ),
+                            hoverlabel=dict(
+                                bgcolor='rgba(0, 0, 0, 0.5)',
+                                bordercolor=color,
+                                font=dict(
+                                    color=color,
+                                    size=13
+                                )
                             ),
                             visible='legendonly'
                         )
@@ -212,7 +229,10 @@ def register_chart_callbacks(app: Dash) -> None:
                         'title': 'No data available for selected tickers',
                         'showlegend': True,
                         'template': 'plotly_dark',
-                        'height': 600
+                        'height': 600,
+                        'paper_bgcolor': THEME['dark']['bg_color'],
+                        'plot_bgcolor': THEME['dark']['plot_bg_color'],
+                        'font': {'color': THEME['dark']['text_color']}
                     }
                 }
             
@@ -223,7 +243,8 @@ def register_chart_callbacks(app: Dash) -> None:
                     'title': {
                         'text': 'Normalized Price Chart (Click to change base point)' if normalize else 'Price Chart',
                         'x': 0.5,
-                        'xanchor': 'center'
+                        'xanchor': 'center',
+                        'font': {'color': THEME['dark']['text_color']}
                     },
                     'showlegend': True,
                     'template': 'plotly_dark',
@@ -233,25 +254,35 @@ def register_chart_callbacks(app: Dash) -> None:
                         'rangeslider': {'visible': False},
                         'showgrid': True,
                         'gridcolor': THEME['dark']['grid_color'],
-                        'domain': [0, 1]
+                        'domain': [0, 1],
+                        'color': THEME['dark']['text_color']
                     },
                     'yaxis': {
                         'title': 'Normalized Price (%)' if normalize else 'Price',
                         'showgrid': True,
                         'gridcolor': THEME['dark']['grid_color'],
                         'type': 'log' if log_scale else 'linear',
-                        'side': 'left'
+                        'side': 'left',
+                        'color': THEME['dark']['text_color']
                     },
                     'yaxis2': {
                         'title': 'Volume',
                         'showgrid': False,
                         'side': 'right',
-                        'overlaying': 'y'
+                        'overlaying': 'y',
+                        'color': THEME['dark']['text_color']
                     },
                     'paper_bgcolor': THEME['dark']['bg_color'],
                     'plot_bgcolor': THEME['dark']['plot_bg_color'],
                     'font': {'color': THEME['dark']['text_color']},
-                    'hovermode': 'x unified',
+                    'hovermode': 'closest',
+                    'hoverdistance': 50,
+                    'hoverlabel': {
+                        'bgcolor': 'rgba(0, 0, 0, 0.5)',
+                        'font': dict(
+                            size=13
+                        )
+                    },
                     'dragmode': 'zoom',
                     'modebar': {
                         'bgcolor': 'rgba(0,0,0,0)',
@@ -260,20 +291,11 @@ def register_chart_callbacks(app: Dash) -> None:
                     },
                     'legend': {
                         'bgcolor': 'rgba(0,0,0,0)',
+                        'font': {'color': THEME['dark']['text_color']},
                         'bordercolor': THEME['dark']['grid_color'],
                         'borderwidth': 1
                     },
-                    'annotations': [
-                        {
-                            'text': 'Click to normalize' if normalize else '',
-                            'xref': 'paper',
-                            'yref': 'paper',
-                            'x': 0.5,
-                            'y': 1.05,
-                            'showarrow': False,
-                            'font': {'size': 12, 'color': THEME['dark']['text_color']}
-                        }
-                    ] if normalize else []
+                    'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
                 }
             }
             
@@ -287,6 +309,9 @@ def register_chart_callbacks(app: Dash) -> None:
                     'title': f'Error: {str(e)}',
                     'showlegend': True,
                     'template': 'plotly_dark',
-                    'height': 600
+                    'height': 600,
+                    'paper_bgcolor': THEME['dark']['bg_color'],
+                    'plot_bgcolor': THEME['dark']['plot_bg_color'],
+                    'font': {'color': THEME['dark']['text_color']}
                 }
             }
