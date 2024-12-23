@@ -31,77 +31,78 @@
 }
 
 /* Dark Dropdown Theme */
-.dash-dropdown-dark .Select__control {
+.dash-dropdown-dark .Select-control {
     background-color: #1a1a1a !important;
     border-color: #444 !important;
     color: white !important;
 }
 
-.dash-dropdown-dark .Select__menu {
+.dash-dropdown-dark .Select-menu-outer {
     background-color: #1a1a1a !important;
     border: 1px solid #444 !important;
 }
 
-.dash-dropdown-dark .Select__option {
+.dash-dropdown-dark .Select-option {
     background-color: #1a1a1a !important;
     color: white !important;
     cursor: pointer !important;
 }
 
-.dash-dropdown-dark .Select__option--is-focused {
+.dash-dropdown-dark .Select-option.is-focused {
     background-color: #333 !important;
 }
 
-.dash-dropdown-dark .Select__option--is-selected {
+.dash-dropdown-dark .Select-option.is-selected {
     background-color: #444 !important;
 }
 
-.dash-dropdown-dark .Select__single-value {
+.dash-dropdown-dark .Select-value {
     color: white !important;
 }
 
-.dash-dropdown-dark .Select__placeholder {
+.dash-dropdown-dark .Select-placeholder {
     color: #888 !important;
 }
 
-.dash-dropdown-dark .Select__multi-value {
-    background-color: #444 !important;
+.dash-dropdown-dark .Select-multi-value-wrapper {
+    background-color: #1a1a1a !important;
 }
 
-.dash-dropdown-dark .Select__multi-value__label {
+.dash-dropdown-dark .Select-value-label {
     color: white !important;
 }
 
-.dash-dropdown-dark .Select__multi-value__remove {
+.dash-dropdown-dark .Select-value-icon {
     color: white !important;
+    border-right: 1px solid #444 !important;
 }
 
-.dash-dropdown-dark .Select__multi-value__remove:hover {
+.dash-dropdown-dark .Select-value-icon:hover {
     background-color: #dc3545 !important;
     color: white !important;
 }
 
-.dash-dropdown-dark .Select__input-container {
+.dash-dropdown-dark .Select-input > input {
     color: white !important;
 }
 
-.dash-dropdown-dark .Select__input-container input {
-    color: white !important;
-}
-
-.dash-dropdown-dark .Select__indicator {
+.dash-dropdown-dark .Select-arrow-zone {
     color: #888 !important;
 }
 
-.dash-dropdown-dark .Select__indicator:hover {
+.dash-dropdown-dark .Select-arrow-zone:hover {
     color: white !important;
 }
 
-.dash-dropdown-dark .Select__indicator-separator {
-    background-color: #444 !important;
+.dash-dropdown-dark .Select-arrow {
+    border-color: #888 transparent transparent !important;
 }
 
-.dash-dropdown-dark .Select__control--is-focused {
+.dash-dropdown-dark .is-open .Select-arrow {
+    border-color: transparent transparent #888 !important;
+}
+
+.dash-dropdown-dark .Select.is-focused:not(.is-open) > .Select-control {
     border-color: #0d6efd !important;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
