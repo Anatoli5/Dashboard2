@@ -97,8 +97,7 @@ class TickerManager:
             for ticker in tickers:
                 available_tickers.append({
                     'label': f"{ticker} ({category})",
-                    'value': ticker,
-                    'category': category
+                    'value': ticker
                 })
         return available_tickers
     

@@ -1,134 +1,117 @@
-"""Main Dash application."""
+"""Main application entry point."""
 
-import dash
-from dash import html, dcc
+import os
+from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
-from config.settings import APP_CONFIG, THEME, TICKER_LISTS
+from frontend.callbacks.chart import register_chart_callbacks
+from frontend.callbacks.data import register_data_callbacks
+from config.settings import THEME, TICKER_LISTS
 
-# Initialize the Dash app
-app = dash.Dash(
+# Initialize the Dash app with Bootstrap dark theme
+app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.DARKLY],
-    suppress_callback_exceptions=True,
-    **APP_CONFIG
+    suppress_callback_exceptions=True
 )
 
-# Create the app layout
+# Configure the app
+app.title = "Financial Dashboard"
+
+# App layout
 app.layout = dbc.Container([
-    # Header
-    dbc.Row([
-        dbc.Col([
-            html.H1("Financial Dashboard", className="text-center mb-4")
-        ])
-    ]),
-    
-    # Main content
     dbc.Row([
         # Sidebar
         dbc.Col([
-            dbc.Card([
-                dbc.CardBody([
-                    html.H4("Controls", className="card-title"),
-                    # Category selection
-                    html.Label("Quick Add by Category"),
-                    dcc.Dropdown(
-                        id='category-dropdown',
-                        options=[
-                            {'label': category, 'value': category}
-                            for category in TICKER_LISTS.keys()
-                        ],
-                        placeholder="Select a category",
-                        className="mb-3"
-                    ),
-                    # Ticker selection
-                    html.Label("Select Tickers"),
-                    dcc.Dropdown(
-                        id='ticker-dropdown',
-                        multi=True,
-                        placeholder="Search for tickers (e.g., AAPL)",
-                        className="mb-3"
-                    ),
-                    # Interval selection
-                    html.Label("Select Interval"),
-                    dcc.Dropdown(
-                        id='interval-dropdown',
-                        options=[
-                            {'label': 'Daily', 'value': '1d'},
-                            {'label': 'Weekly', 'value': '1wk'},
-                            {'label': 'Monthly', 'value': '1mo'}
-                        ],
-                        value='1d',
-                        className="mb-3"
-                    ),
-                    # Date range
-                    html.Label("Select Date Range"),
-                    dcc.DatePickerRange(
-                        id='date-range',
-                        className="mb-3",
-                        display_format='YYYY-MM-DD'
-                    ),
-                    # Chart controls
-                    html.H5("Chart Controls", className="mt-3"),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Switch(
-                                id='log-scale-switch',
-                                label="Logarithmic Scale",
-                                value=False,
-                                className="mb-2"
-                            ),
-                        ], width=6),
-                        dbc.Col([
-                            dbc.Switch(
-                                id='normalize-switch',
-                                label="Normalize Data",
-                                value=False,
-                                className="mb-2"
-                            ),
-                        ], width=6),
-                    ]),
-                    html.Hr(),
-                    # Update button
-                    dbc.Button(
-                        "Update Data",
-                        id="update-button",
-                        color="primary",
-                        className="w-100 mb-3"
-                    ),
-                    # Error messages
-                    html.Div(id='error-message', className="text-danger")
-                ])
-            ])
-        ], width=3),
+            html.H4("Controls", className="mb-3"),
+            
+            # Category Dropdown
+            html.Label("Add Category", className="mb-2"),
+            dcc.Dropdown(
+                id='category-dropdown',
+                options=[{'label': cat, 'value': cat} for cat in TICKER_LISTS.keys()],
+                placeholder="Select a category to add tickers",
+                className="mb-3"
+            ),
+            
+            # Ticker Multi-Select
+            html.Label("Selected Tickers", className="mb-2"),
+            dcc.Dropdown(
+                id='ticker-dropdown',
+                multi=True,
+                placeholder="Search and select tickers",
+                className="mb-3"
+            ),
+            
+            # Interval Selection
+            html.Label("Interval", className="mb-2"),
+            dcc.Dropdown(
+                id='interval-dropdown',
+                options=[
+                    {'label': '1 Day', 'value': '1d'},
+                    {'label': '1 Week', 'value': '1wk'},
+                    {'label': '1 Month', 'value': '1mo'}
+                ],
+                value='1d',
+                className="mb-3"
+            ),
+            
+            # Date Range
+            html.Label("Date Range", className="mb-2"),
+            dcc.DatePickerRange(
+                id='date-range',
+                className="mb-3",
+                display_format='YYYY-MM-DD'
+            ),
+            
+            # Log Scale Toggle
+            dbc.Switch(
+                id='log-scale-switch',
+                label="Logarithmic Scale",
+                value=False,
+                className="mb-3"
+            ),
+            
+            # Normalize Toggle
+            dbc.Switch(
+                id='normalize-switch',
+                label="Normalize Prices",
+                value=False,
+                className="mb-3"
+            ),
+            
+            # Update Button
+            dbc.Button(
+                "Update Data",
+                id='update-button',
+                color="primary",
+                className="w-100 mb-3"
+            )
+        ], width=3, className="bg-dark p-4 border-end"),
         
-        # Main chart area
+        # Main Content
         dbc.Col([
-            dbc.Card([
-                dbc.CardBody([
-                    # Loading spinner for chart
-                    dbc.Spinner(
-                        dcc.Graph(
-                            id='price-chart',
-                            config={
-                                'displayModeBar': True,
-                                'scrollZoom': True,
-                                'displaylogo': False,
-                                'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape']
-                            }
-                        ),
-                        color="primary",
-                        type="border",
-                        fullscreen=False
-                    )
-                ])
-            ])
-        ], width=9)
-    ])
-], fluid=True, className="p-4")
+            dcc.Graph(
+                id='price-chart',
+                className="h-100",
+                config={
+                    'scrollZoom': True,
+                    'showTips': True,
+                    'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
+                    'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                    'displaylogo': False
+                }
+            )
+        ], width=9, className="p-4")
+    ], className="h-100")
+], fluid=True, className="vh-100 bg-dark text-light p-0")
 
 # Register callbacks
-from frontend.callbacks import register_callbacks
-register_callbacks(app)
+register_chart_callbacks(app)
+register_data_callbacks(app)
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8050)
+    # Get port from environment or use default
+    port = int(os.environ.get('PORT', 8050))
+    
+    # Run the app
+    app.run_server(debug=True, host='0.0.0.0', port=port)

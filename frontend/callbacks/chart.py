@@ -9,7 +9,24 @@ import plotly.graph_objects as go
 from dash.exceptions import PreventUpdate
 
 from backend.data.manager import DataManager
+from core.ticker_manager import TickerManager
+from core.state_manager import StateManager
 from config.settings import THEME
+
+
+# Custom color sequence from original project
+COLORS = [
+    '#2E91E5',  # Blue
+    '#E15F99',  # Pink
+    '#1CA71C',  # Green
+    '#FB0D0D',  # Red
+    '#DA16FF',  # Purple
+    '#B68100',  # Brown
+    '#EB663B',  # Orange
+    '#511CFB',  # Indigo
+    '#00CED1',  # Dark Turquoise
+    '#FFD700',  # Gold
+]
 
 
 def normalize_data(df: pd.DataFrame, click_point: Dict = None) -> pd.DataFrame:
@@ -22,8 +39,16 @@ def normalize_data(df: pd.DataFrame, click_point: Dict = None) -> pd.DataFrame:
         click_time = pd.to_datetime(click_point['x'])
         idx = df.index.get_indexer([click_time], method='nearest')[0]
         reference_value = df.iloc[idx]
+        # Save normalization point in state
+        StateManager.set_state('norm_date', click_time.isoformat())
     else:
-        reference_value = df.iloc[0]
+        # Try to get saved normalization point
+        saved_norm_date = StateManager.get_state('norm_date')
+        if saved_norm_date and saved_norm_date in df.index:
+            reference_value = df.loc[saved_norm_date]
+        else:
+            reference_value = df.iloc[0]
+            StateManager.set_state('norm_date', df.index[0].isoformat())
         
     if reference_value == 0:
         return df
@@ -65,19 +90,42 @@ def register_chart_callbacks(app: Dash) -> None:
         ctx = callback_context
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
         
+        # Save current settings to state
+        if triggered_id not in ['price-chart']:
+            StateManager.update_state({
+                'interval': interval,
+                'log_scale': log_scale,
+                'normalize': normalize,
+                'start_date': start_date,
+                'end_date': end_date
+            })
+        
         # Handle empty tickers
         if not tickers:
             return {
                 'data': [],
                 'layout': {
-                    'title': 'Select tickers to display',
+                    'title': {
+                        'text': 'Select tickers to display',
+                        'x': 0.5,
+                        'xanchor': 'center'
+                    },
                     'showlegend': True,
                     'template': 'plotly_dark',
                     'height': 600,
                     'xaxis': {'showgrid': True},
                     'yaxis': {'showgrid': True},
                     'paper_bgcolor': THEME['dark']['bg_color'],
-                    'plot_bgcolor': THEME['dark']['plot_bg_color']
+                    'plot_bgcolor': THEME['dark']['plot_bg_color'],
+                    'annotations': [{
+                        'text': 'Use the controls on the left to select tickers',
+                        'xref': 'paper',
+                        'yref': 'paper',
+                        'x': 0.5,
+                        'y': 0.5,
+                        'showarrow': False,
+                        'font': {'size': 16, 'color': THEME['dark']['text_color']}
+                    }]
                 }
             }
         
@@ -109,8 +157,9 @@ def register_chart_callbacks(app: Dash) -> None:
             
             # Create traces
             traces = []
-            for ticker, df in ticker_data.items():
+            for i, (ticker, df) in enumerate(ticker_data.items()):
                 if not df.empty:
+                    color = COLORS[i % len(COLORS)]
                     # Get the close prices
                     close_prices = df['close']
                     
@@ -124,12 +173,35 @@ def register_chart_callbacks(app: Dash) -> None:
                             y=close_prices,
                             name=ticker,
                             mode='lines',
+                            line=dict(
+                                color=color,
+                                width=2
+                            ),
                             hovertemplate=(
                                 f"{ticker}<br>"
                                 "Date: %{x}<br>" +
                                 ("Normalized: %{y:.1f}%<br>" if normalize else "Price: %{y:.2f}<br>") +
                                 "<extra></extra>"
                             )
+                        )
+                    )
+                    
+                    # Add volume bars
+                    traces.append(
+                        go.Bar(
+                            x=df.index,
+                            y=df['volume'],
+                            name=f"{ticker} Volume",
+                            yaxis='y2',
+                            marker_color=color,
+                            opacity=0.3,
+                            hovertemplate=(
+                                f"{ticker} Volume<br>"
+                                "Date: %{x}<br>"
+                                "Volume: %{y:,.0f}<br>"
+                                "<extra></extra>"
+                            ),
+                            visible='legendonly'
                         )
                     )
             
@@ -160,13 +232,21 @@ def register_chart_callbacks(app: Dash) -> None:
                         'title': 'Date',
                         'rangeslider': {'visible': False},
                         'showgrid': True,
-                        'gridcolor': THEME['dark']['grid_color']
+                        'gridcolor': THEME['dark']['grid_color'],
+                        'domain': [0, 1]
                     },
                     'yaxis': {
                         'title': 'Normalized Price (%)' if normalize else 'Price',
                         'showgrid': True,
                         'gridcolor': THEME['dark']['grid_color'],
-                        'type': 'log' if log_scale else 'linear'
+                        'type': 'log' if log_scale else 'linear',
+                        'side': 'left'
+                    },
+                    'yaxis2': {
+                        'title': 'Volume',
+                        'showgrid': False,
+                        'side': 'right',
+                        'overlaying': 'y'
                     },
                     'paper_bgcolor': THEME['dark']['bg_color'],
                     'plot_bgcolor': THEME['dark']['plot_bg_color'],
@@ -177,6 +257,11 @@ def register_chart_callbacks(app: Dash) -> None:
                         'bgcolor': 'rgba(0,0,0,0)',
                         'color': THEME['dark']['text_color'],
                         'activecolor': THEME['dark']['text_color']
+                    },
+                    'legend': {
+                        'bgcolor': 'rgba(0,0,0,0)',
+                        'bordercolor': THEME['dark']['grid_color'],
+                        'borderwidth': 1
                     },
                     'annotations': [
                         {
