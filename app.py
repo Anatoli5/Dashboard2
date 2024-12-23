@@ -67,6 +67,27 @@ app.layout = dbc.Container([
                         className="mb-3",
                         display_format='YYYY-MM-DD'
                     ),
+                    # Chart controls
+                    html.H5("Chart Controls", className="mt-3"),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Switch(
+                                id='log-scale-switch',
+                                label="Logarithmic Scale",
+                                value=False,
+                                className="mb-2"
+                            ),
+                        ], width=6),
+                        dbc.Col([
+                            dbc.Switch(
+                                id='normalize-switch',
+                                label="Normalize Data",
+                                value=False,
+                                className="mb-2"
+                            ),
+                        ], width=6),
+                    ]),
+                    html.Hr(),
                     # Update button
                     dbc.Button(
                         "Update Data",
@@ -91,7 +112,8 @@ app.layout = dbc.Container([
                             config={
                                 'displayModeBar': True,
                                 'scrollZoom': True,
-                                'displaylogo': False
+                                'displaylogo': False,
+                                'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape']
                             }
                         ),
                         color="primary",
