@@ -20,6 +20,7 @@ class ChartManager:
 
     # Chart configuration
     CHART_CONFIG = {
+        'scrollZoom': True,           # Enable mouse wheel zoom
         'displayModeBar': True,       # Show the mode bar
         'displaylogo': False,         # Hide Plotly logo
         'modeBarButtonsToRemove': [   # Remove unnecessary buttons
@@ -29,7 +30,16 @@ class ChartManager:
         ],
         'doubleClick': 'reset+autosize',  # Double click to reset view
         'showTips': True,             # Show tips when hovering over mode bar buttons
-        'responsive': True            # Make chart responsive to window size
+        'responsive': True,           # Make chart responsive to window size
+        'editable': False,            # Disable edit mode
+        'showAxisDragHandles': True,  # Show axis drag handles
+        'toImageButtonOptions': {     # Configure image export
+            'format': 'png',
+            'filename': 'chart',
+            'height': 600,
+            'width': 1200,
+            'scale': 2
+        }
     }
 
     @staticmethod
@@ -64,7 +74,7 @@ class ChartManager:
             log_scale: bool = False,
             theme: str = "dark"
     ) -> go.Figure:
-        """Create price chart with theme support"""
+        """Create price chart with theme support and interactivity"""
         colors = ChartManager.get_theme_colors(theme)
         
         # Create figure with appropriate template
@@ -166,9 +176,21 @@ class ChartManager:
             )
         )
 
-        # Configure axes zoom
-        fig.update_xaxes(fixedrange=False)  # Enable x-axis zoom
-        fig.update_yaxes(fixedrange=False)  # Enable y-axis zoom
+        # Add click event handling
+        fig.update_layout(
+            clickmode='event',
+            # Add custom JavaScript for click handling
+            updatemenus=[{
+                'buttons': [{
+                    'args': [{'clickmode': 'event'}],
+                    'label': 'Click to normalize',
+                    'method': 'relayout'
+                }],
+                'showactive': False,
+                'type': 'buttons',
+                'visible': False
+            }]
+        )
 
         # Add watermark
         if not st.session_state.get('norm_date'):
