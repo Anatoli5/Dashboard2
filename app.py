@@ -155,30 +155,20 @@ app.layout = html.Div([
             dbc.Col([
                 # Chart container
                 html.Div([
-                    # Chart wrapper
-                    html.Div([
-                        dcc.Graph(
-                            id='chart',
-                            style={
-                                "height": "100%",
-                                "width": "100%"
-                            },
-                            config={
-                                'scrollZoom': True,
-                                'showTips': True,
-                                'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
-                                'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                                'displaylogo': False
-                            }
-                        )
-                    ], style={
-                        "height": "100%",
-                        "width": "100%",
-                        "backgroundColor": THEME['chart_inner_bg'],
-                        "borderRadius": "10px",
-                        "padding": "1rem",
-                        "border": f"1px solid {THEME['border']}"
-                    })
+                    dcc.Graph(
+                        id='chart',
+                        style={
+                            "height": "100%",
+                            "width": "100%"
+                        },
+                        config={
+                            'scrollZoom': True,
+                            'showTips': True,
+                            'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
+                            'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                            'displaylogo': False
+                        }
+                    )
                 ], id="chart-container", style={
                     "position": "relative",
                     "resize": "both",
@@ -188,7 +178,8 @@ app.layout = html.Div([
                     "height": "80vh",
                     "width": "100%",
                     "margin": "1rem",
-                    "backgroundColor": THEME['chart_outer_bg'],
+                    "padding": "1rem",
+                    "backgroundColor": THEME['sidebar_bg'],
                     "borderRadius": "10px",
                     "border": f"1px solid {THEME['border']}"
                 })

@@ -3,10 +3,10 @@
 COLOR_SCHEMES = {
     'dark': {
         # Main backgrounds
-        'page_bg': '#121212',
+        'page_bg': '#000000',
         'sidebar_bg': '#1E1E1E',
         'chart_outer_bg': '#1a1a1a',
-        'chart_inner_bg': '#222222',
+        'chart_inner_bg': '#1a1a1a',
         
         # Text colors
         'text_primary': '#FFFFFF',

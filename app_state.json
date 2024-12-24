@@ -22,6 +22,6 @@
     "normalize": true,
     "start_date": "2023-12-24",
     "end_date": "2024-12-23",
-    "norm_date": "2024-12-23T00:00:00",
+    "norm_date": "2024-12-05T00:00:00",
     "theme": "https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/darkly/bootstrap.min.css"
 }
