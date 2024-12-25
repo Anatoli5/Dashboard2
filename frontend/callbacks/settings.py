@@ -2,19 +2,43 @@
 
 import json
 from typing import Dict, List
-from dash import Dash, Input, Output, State, ALL, ctx
-import dash_bootstrap_components as dbc
+from dash import Dash, Input, Output, State, ctx
+import dash_mantine_components as dmc
 from core.state_manager import StateManager
 
-def save_app_state(app_state):
-    """Save app state to file."""
-    try:
-        print("Saving app state:", app_state)
-        with open('app_state.json', 'w') as f:
-            json.dump(app_state, f, indent=4)
-        print("App state saved successfully")
-    except Exception as e:
-        print(f"Error saving app state: {e}")
+def save_app_state(
+    tickers: List[str] = None,
+    interval: str = None,
+    log_scale: bool = None,
+    normalize: bool = None,
+    start_date: str = None,
+    end_date: str = None,
+    norm_date: str = None,
+    theme: str = None
+) -> None:
+    """Save application state to a file."""
+    state = load_app_state()
+    
+    if tickers is not None:
+        state['selected_tickers'] = tickers
+    if interval is not None:
+        state['interval'] = interval
+    if log_scale is not None:
+        state['log_scale'] = log_scale
+    if normalize is not None:
+        state['normalize'] = normalize
+    if start_date is not None:
+        state['start_date'] = start_date
+    if end_date is not None:
+        state['end_date'] = end_date
+    if norm_date is not None:
+        state['norm_date'] = norm_date
+    if theme is not None:
+        state['theme'] = theme
+    
+    # Save to file
+    with open('app_state.json', 'w') as f:
+        json.dump(state, f)
 
 def load_app_state():
     """Load app state from file."""
@@ -31,51 +55,39 @@ def register_settings_callbacks(app: Dash) -> None:
     """Register settings-related callbacks."""
     
     @app.callback(
-        Output("settings-modal", "is_open"),
+        Output("settings-modal", "opened"),
         [Input("settings-open", "n_clicks"), Input("settings-close", "n_clicks")],
-        [State("settings-modal", "is_open")],
+        prevent_initial_call=True
     )
-    def toggle_modal(n1, n2, is_open):
+    def toggle_modal(open_clicks, close_clicks):
         """Toggle the settings modal."""
-        if n1 or n2:
-            return not is_open
-        return is_open
+        triggered_id = ctx.triggered_id
+        if triggered_id == 'settings-open':
+            return True
+        elif triggered_id == 'settings-close':
+            return False
+        return False
 
     @app.callback(
-        [Output("theme-stylesheet", "href"),
-         Output("theme-selector", "value")],
-        Input("theme-selector", "value"),
-        State("theme-selector", "value")
+        Output("theme-select", "value"),
+        Input("settings-modal", "opened"),
+        prevent_initial_call=True
     )
-    def update_theme(new_theme, current_theme):
-        """Update the theme and persist the selection."""
-        print("Theme callback triggered")
-        print("New theme:", new_theme)
-        print("Current theme:", current_theme)
-        print("Triggered by:", ctx.triggered_id)
-        
-        # If this is an automatic trigger (not user action), keep current theme
-        if not ctx.triggered_id:
-            print("Automatic trigger - keeping current theme")
-            app_state = load_app_state()
-            saved_theme = app_state.get('theme')
-            if saved_theme:
-                return saved_theme, saved_theme
-            return current_theme, current_theme
-            
-        if not new_theme:
-            print("No theme selected, using default")
-            return dbc.themes.DARKLY, dbc.themes.DARKLY
-            
-        # Only save if this is a user change
-        if new_theme != current_theme:
-            print("Theme changed by user, saving...")
-            try:
-                app_state = load_app_state()
-                app_state['theme'] = new_theme
-                save_app_state(app_state)
-                print("Theme saved successfully:", new_theme)
-            except Exception as e:
-                print(f"Error saving theme: {e}")
-            
-        return new_theme, new_theme 
+    def load_theme_setting(opened):
+        """Load the theme setting when modal opens."""
+        if not opened:
+            return None
+        app_state = load_app_state()
+        return app_state.get('theme', 'dark')
+
+    @app.callback(
+        Output("theme-select", "value", allow_duplicate=True),
+        Input("theme-select", "value"),
+        prevent_initial_call=True
+    )
+    def save_theme_setting(theme):
+        """Save the theme setting when changed."""
+        if theme is None:
+            return 'dark'
+        save_app_state(theme=theme)
+        return theme 

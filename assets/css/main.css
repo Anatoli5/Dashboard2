@@ -1,244 +1,148 @@
-/* Main container styles */
-.app-container {
-    padding: 1rem;
-    height: 100vh;
-    background-color: var(--bs-dark);
+/* CSS Variables */
+:root {
+    /* Base colors */
+    --app-bg: #1a1b1e;
+    --sidebar-bg: #25262b;
+    --content-bg: #25262b;
+    --border-color: #373a40;
+    --text-primary: #c1c2c5;
+    --text-secondary: #909296;
+    --accent-color: #1971c2;
+    --accent-color-hover: #1864ab;
+    --hover-bg: rgba(255, 255, 255, 0.05);
+    --positive-color: #40c057;
+    --negative-color: #fa5252;
 }
 
-/* Sidebar styles */
-.sidebar {
-    height: 100%;
-    padding: 1rem;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 0.5rem;
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Chart container styles */
-.chart-container {
-    height: calc(100vh - 200px);
-    padding: 1rem;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
+body {
+    background-color: var(--app-bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Info container styles */
-.info-container {
-    height: 100px;
-    padding: 1rem;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 0.5rem;
+/* AG Grid Theme Customization */
+.ag-theme-alpine-dark {
+    --ag-background-color: var(--content-bg);
+    --ag-border-color: var(--border-color);
+    --ag-header-background-color: var(--sidebar-bg);
+    --ag-odd-row-background-color: var(--content-bg);
+    --ag-header-foreground-color: var(--text-primary);
+    --ag-foreground-color: var(--text-primary);
+    --ag-row-hover-color: var(--hover-bg);
+    --ag-selected-row-background-color: rgba(25, 113, 194, 0.3);
+    --ag-font-size: 13px;
+    --ag-font-family: inherit;
+    --ag-grid-size: 4px;
+    --ag-list-item-height: 24px;
 }
 
-/* Dark Dropdown Theme */
-.dash-dropdown-dark .Select-control {
-    background-color: #1a1a1a !important;
-    border-color: #444 !important;
-    color: white !important;
+.ag-theme-alpine-dark .ag-header {
+    border-bottom: 1px solid var(--border-color);
 }
 
-.dash-dropdown-dark .Select-menu-outer {
-    background-color: #1a1a1a !important;
-    border: 1px solid #444 !important;
+.ag-theme-alpine-dark .ag-cell {
+    border-right: 1px solid var(--border-color);
 }
 
-.dash-dropdown-dark .Select-option {
-    background-color: #1a1a1a !important;
-    color: white !important;
-    cursor: pointer !important;
+.ag-theme-alpine-dark .ag-row {
+    border-bottom: 1px solid var(--border-color);
 }
 
-.dash-dropdown-dark .Select-option.is-focused {
-    background-color: #333 !important;
+/* Mantine Customizations */
+.mantine-Paper-root {
+    background-color: var(--content-bg);
+    border-color: var(--border-color);
 }
 
-.dash-dropdown-dark .Select-option.is-selected {
-    background-color: #444 !important;
+.mantine-Tabs-tab {
+    color: var(--text-secondary);
 }
 
-.dash-dropdown-dark .Select-value {
-    color: white !important;
+.mantine-Tabs-tab[data-active] {
+    color: var(--text-primary);
+    border-color: var(--accent-color);
 }
 
-.dash-dropdown-dark .Select-placeholder {
-    color: #888 !important;
+.mantine-Tabs-tab:hover {
+    background-color: var(--hover-bg);
 }
 
-.dash-dropdown-dark .Select-multi-value-wrapper {
-    background-color: #1a1a1a !important;
+.mantine-Select-input, 
+.mantine-MultiSelect-input,
+.mantine-DateRangePicker-input {
+    background-color: var(--sidebar-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
-.dash-dropdown-dark .Select-value-label {
-    color: white !important;
+.mantine-Select-dropdown,
+.mantine-MultiSelect-dropdown {
+    background-color: var(--sidebar-bg);
+    border-color: var(--border-color);
 }
 
-.dash-dropdown-dark .Select-value-icon {
-    color: white !important;
-    border-right: 1px solid #444 !important;
+.mantine-Select-item,
+.mantine-MultiSelect-item {
+    color: var(--text-primary);
 }
 
-.dash-dropdown-dark .Select-value-icon:hover {
-    background-color: #dc3545 !important;
-    color: white !important;
+.mantine-Select-item[data-selected],
+.mantine-MultiSelect-item[data-selected] {
+    background-color: var(--accent-color);
 }
 
-.dash-dropdown-dark .Select-input > input {
-    color: white !important;
+.mantine-Select-item:hover,
+.mantine-MultiSelect-item:hover {
+    background-color: var(--hover-bg);
 }
 
-.dash-dropdown-dark .Select-arrow-zone {
-    color: #888 !important;
+.mantine-Switch-track {
+    background-color: var(--border-color);
 }
 
-.dash-dropdown-dark .Select-arrow-zone:hover {
-    color: white !important;
+.mantine-Switch-track[data-checked] {
+    background-color: var(--accent-color);
 }
 
-.dash-dropdown-dark .Select-arrow {
-    border-color: #888 transparent transparent !important;
+.mantine-Button-root {
+    background-color: var(--accent-color);
 }
 
-.dash-dropdown-dark .is-open .Select-arrow {
-    border-color: transparent transparent #888 !important;
+.mantine-Button-root:hover {
+    background-color: var(--accent-color-hover);
 }
 
-.dash-dropdown-dark .Select.is-focused:not(.is-open) > .Select-control {
-    border-color: #0d6efd !important;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+.mantine-Button-subtle {
+    background-color: transparent;
+    color: var(--text-primary);
 }
 
-/* DatePicker styling */
-.DateInput {
-    background-color: transparent !important;
+.mantine-Button-subtle:hover {
+    background-color: var(--hover-bg);
 }
 
-.DateInput_input {
-    background-color: var(--bs-dark) !important;
-    color: var(--bs-light) !important;
-    border-color: var(--bs-gray-700) !important;
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-.SingleDatePickerInput, .DateRangePickerInput {
-    background-color: var(--bs-dark) !important;
-    border-color: var(--bs-gray-700) !important;
+::-webkit-scrollbar-track {
+    background: var(--app-bg);
 }
 
-/* Plotly modebar styling */
-.modebar-container {
-    background-color: transparent !important;
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
 }
 
-.modebar {
-    background-color: transparent !important;
-}
-
-.modebar-btn {
-    color: var(--bs-light) !important;
-    background: var(--bs-dark) !important;
-}
-
-.modebar-btn:hover {
-    color: var(--bs-primary) !important;
-    background: var(--bs-gray-700) !important;
-}
-
-.modebar-btn.active {
-    background: var(--bs-gray-700) !important;
-}
-
-.modebar-btn svg {
-    fill: currentColor !important;
-}
-
-/* Export button override */
-.modebar-btn[data-title="Download plot as a png"] {
-    background: var(--bs-dark) !important;
-    border: 1px solid var(--bs-gray-700) !important;
-}
-
-.modebar-btn[data-title="Download plot as a png"]:hover {
-    background: var(--bs-gray-700) !important;
-}
-
-/* Labels */
-label {
-    color: var(--bs-light) !important;
-}
-
-/* Calendar styling */
-.CalendarMonth {
-    background-color: var(--bs-dark) !important;
-}
-
-.CalendarMonth_caption {
-    color: var(--bs-light) !important;
-}
-
-.CalendarDay {
-    background-color: var(--bs-dark) !important;
-    color: var(--bs-light) !important;
-    border: 1px solid var(--bs-gray-700) !important;
-}
-
-.CalendarDay:hover {
-    background-color: var(--bs-gray-700) !important;
-    border: 1px solid var(--bs-gray-600) !important;
-}
-
-.CalendarDay__selected {
-    background-color: var(--bs-primary) !important;
-    border: 1px solid var(--bs-primary) !important;
-}
-
-.CalendarDay__selected:hover {
-    background-color: var(--bs-primary) !important;
-    color: var(--bs-light) !important;
-}
-
-.DayPickerNavigation_button {
-    background-color: var(--bs-dark) !important;
-    border: 1px solid var(--bs-gray-700) !important;
-}
-
-.DayPickerNavigation_button:hover {
-    background-color: var(--bs-gray-700) !important;
-}
-
-/* Dash debug menu styling - updated selectors */
-#_dash-global-error-container {
-    background-color: var(--bs-dark) !important;
-}
-
-/* Target the debug menu container */
-div[id*='_dash-app-content'] ._dash-undo-redo {
-    background: var(--bs-dark) !important;
-    border: 1px solid var(--bs-gray-700) !important;
-    border-radius: 4px !important;
-    position: fixed !important;
-    bottom: 20px !important;
-    right: 20px !important;
-    z-index: 1000 !important;
-}
-
-/* Target the debug menu buttons */
-div[id*='_dash-app-content'] ._dash-undo-redo button {
-    background: var(--bs-dark) !important;
-    color: var(--bs-light) !important;
-    border: none !important;
-    padding: 8px !important;
-    margin: 0 !important;
-    cursor: pointer !important;
-}
-
-/* Target the debug menu buttons on hover */
-div[id*='_dash-app-content'] ._dash-undo-redo button:hover {
-    background: var(--bs-gray-700) !important;
-    color: var(--bs-primary) !important;
-}
-
-/* Hide the debug menu completely if needed */
-/*
-._dash-undo-redo {
-    display: none !important;
-}
-*/ 
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+} 

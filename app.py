@@ -1,34 +1,20 @@
-"""Main application entry point."""
+"""Main application file."""
 
 import os
 import json
-from dash import Dash, html, dcc, Input, Output
-import dash_bootstrap_components as dbc
+from dash import Dash, html, dcc
+import dash_mantine_components as dmc
+from frontend.components.data_grid import create_data_grid
+from frontend.components.settings_modal import create_settings_modal
+from frontend.components.chart import create_chart
 from frontend.callbacks.chart import register_chart_callbacks
 from frontend.callbacks.data import register_data_callbacks
+from frontend.callbacks.grid import register_grid_callbacks
 from frontend.callbacks.settings import register_settings_callbacks, load_app_state
-from frontend.components.settings_modal import create_settings_modal, THEMES, THEME_URLS
-from config.settings import TICKER_LISTS, THEME
+from config.settings import TICKER_LISTS
 
-# Load saved state and get initial theme
+# Load saved state
 app_state = load_app_state()
-print("Loaded app_state:", app_state.get('theme'))
-initial_theme = THEME_URLS['DARKLY']  # Default theme
-print("Default theme:", initial_theme)
-
-if app_state.get('theme'):
-    saved_theme = app_state['theme']
-    print("Found saved theme:", saved_theme)
-    # Validate that the saved theme is in our list of available themes
-    available_themes = [theme['value'] for theme in THEMES]
-    print("Available themes:", available_themes)
-    if saved_theme in available_themes:
-        initial_theme = saved_theme
-        print("Using saved theme:", initial_theme)
-    else:
-        print(f"Saved theme {saved_theme} not found in available themes, using default")
-else:
-    print("No saved theme found, using default")
 
 # Initialize the Dash app
 app = Dash(
@@ -40,175 +26,225 @@ app = Dash(
 # Configure the app
 app.title = "Financial Dashboard"
 
-# App layout
-app.layout = html.Div([
-    # Theme stylesheet
-    html.Link(id="theme-stylesheet", rel="stylesheet", href=initial_theme),
-    
-    # Main layout
-    dbc.Container([
-        dbc.Row([
-            # Sidebar
-            dbc.Col([
-                # Header with settings
-                html.Div([
-                    html.H4("Controls", className="mb-0"),
-                    dbc.Button(
-                        "⋮",  # Three dots menu icon
-                        id="settings-open",
-                        color="link",
-                        className="p-0 ms-auto",
-                        style={
-                            "fontSize": "24px",
-                            "textDecoration": "none",
-                            "backgroundColor": "transparent",
-                            "border": "none",
-                            "boxShadow": "none",
-                            "transition": "color 0.2s ease",
-                            "cursor": "pointer"
-                        }
-                    )
-                ], className="d-flex align-items-center mb-3"),
-                
-                # Category Dropdown
-                html.Label("Add Category", className="mb-2"),
-                dcc.Dropdown(
-                    id='category-dropdown',
-                    options=[{'label': cat, 'value': cat} for cat in TICKER_LISTS.keys()],
-                    placeholder="Select a category to add tickers",
-                    className="mb-3 dash-dropdown-dark",
-                    persistence=True,
-                    persistence_type='local'
+# Create theme provider
+theme = {
+    'colorScheme': app_state.get('theme', 'dark'),
+    'primaryColor': 'blue',
+    'components': {
+        'Button': {'styles': {'root': {'fontWeight': 500}}},
+        'Switch': {'styles': {'root': {'cursor': 'pointer'}}},
+        'Select': {'styles': {'input': {'cursor': 'pointer'}}},
+    }
+}
+
+app.layout = dmc.MantineProvider(
+    theme=theme,
+    withGlobalStyles=True,
+    children=[
+        dmc.Container(
+            fluid=True,
+            px=0,
+            children=[
+                # Main container
+                dmc.SimpleGrid(
+                    cols=2,
+                    spacing="md",
+                    children=[
+                        # Sidebar
+                        dmc.Paper(
+                            shadow="sm",
+                            radius="md",
+                            p="md",
+                            withBorder=True,
+                            style={"width": "280px"},
+                            children=[
+                                # Header with settings
+                                dmc.Group(
+                                    justify="space-between",
+                                    mb="md",
+                                    children=[
+                                        dmc.Text("Controls", size="lg", fw=500),
+                                        dmc.ActionIcon(
+                                            id="settings-open",
+                                            variant="subtle",
+                                            size="lg",
+                                            children="⚙️"
+                                        )
+                                    ]
+                                ),
+                                
+                                # Category Dropdown
+                                dmc.Select(
+                                    id='category-dropdown',
+                                    label="Add Category",
+                                    placeholder="Select a category",
+                                    data=[{'label': cat, 'value': cat} for cat in TICKER_LISTS.keys()],
+                                    clearable=True,
+                                    persistence=True,
+                                    persistence_type='local',
+                                    mb="md"
+                                ),
+                                
+                                # Ticker Multi-Select
+                                dmc.MultiSelect(
+                                    id='ticker-dropdown',
+                                    label="Selected Tickers",
+                                    placeholder="Search and select tickers",
+                                    clearable=True,
+                                    searchable=True,
+                                    persistence=True,
+                                    persistence_type='local',
+                                    mb="md"
+                                ),
+                                
+                                # Interval Selection
+                                dmc.Select(
+                                    id='interval-dropdown',
+                                    label="Interval",
+                                    data=[
+                                        {'label': '1 Minute', 'value': '1min'},
+                                        {'label': '5 Minutes', 'value': '5min'},
+                                        {'label': '15 Minutes', 'value': '15min'},
+                                        {'label': '30 Minutes', 'value': '30min'},
+                                        {'label': '1 Hour', 'value': '1hour'},
+                                        {'label': '4 Hours', 'value': '4hour'},
+                                        {'label': 'Daily', 'value': '1day'}
+                                    ],
+                                    value='1min',
+                                    persistence=True,
+                                    persistence_type='local',
+                                    mb="md"
+                                ),
+                                
+                                # Date Range
+                                dmc.Group(
+                                    grow=True,
+                                    children=[
+                                        dmc.DatePickerInput(
+                                            id='date-range-start',
+                                            label="Start Date",
+                                            placeholder="Pick start date",
+                                            value=app_state.get('start_date'),
+                                            persistence=True,
+                                            persistence_type='local',
+                                            mb="md"
+                                        ),
+                                        dmc.DatePickerInput(
+                                            id='date-range-end',
+                                            label="End Date",
+                                            placeholder="Pick end date",
+                                            value=app_state.get('end_date'),
+                                            persistence=True,
+                                            persistence_type='local',
+                                            mb="md"
+                                        )
+                                    ]
+                                ),
+                                
+                                # Controls
+                                dmc.Stack(
+                                    gap="sm",
+                                    mb="md",
+                                    children=[
+                                        dmc.Group(
+                                            justify="space-between",
+                                            children=[
+                                                dmc.Text("Log Scale"),
+                                                dmc.Switch(
+                                                    id='log-scale-switch',
+                                                    checked=False,
+                                                    persistence=True,
+                                                    persistence_type='local'
+                                                )
+                                            ]
+                                        ),
+                                        dmc.Group(
+                                            justify="space-between",
+                                            children=[
+                                                dmc.Text("Normalize"),
+                                                dmc.Switch(
+                                                    id='normalize-switch',
+                                                    checked=False,
+                                                    persistence=True,
+                                                    persistence_type='local'
+                                                )
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                
+                                # Update Button
+                                dmc.Button(
+                                    "Update Data",
+                                    id='update-button',
+                                    variant="filled",
+                                    fullWidth=True
+                                )
+                            ]
+                        ),
+                        
+                        # Main content
+                        dmc.Stack(
+                            gap="md",
+                            style={"flex": 1},
+                            children=[
+                                # Tabs for Chart and Grid
+                                dmc.Tabs(
+                                    id="view-tabs",
+                                    value="chart",
+                                    children=[
+                                        dmc.TabsList([
+                                            dmc.TabsTab("Chart", value="chart"),
+                                            dmc.TabsTab("Grid", value="grid")
+                                        ]),
+                                        dmc.TabsPanel(
+                                            value="chart",
+                                            children=dmc.Paper(
+                                                shadow="sm",
+                                                radius="md",
+                                                p="md",
+                                                withBorder=True,
+                                                children=create_chart()
+                                            )
+                                        ),
+                                        dmc.TabsPanel(
+                                            value="grid",
+                                            children=dmc.Paper(
+                                                shadow="sm",
+                                                radius="md",
+                                                p="md",
+                                                withBorder=True,
+                                                children=create_data_grid()
+                                            )
+                                        )
+                                    ]
+                                ),
+                                
+                                # Info container
+                                dmc.Paper(
+                                    id='info-container',
+                                    shadow="sm",
+                                    radius="md",
+                                    p="md",
+                                    withBorder=True,
+                                    style={'height': '80px'}
+                                )
+                            ]
+                        )
+                    ]
                 ),
                 
-                # Ticker Multi-Select
-                html.Label("Selected Tickers", className="mb-2"),
-                dcc.Dropdown(
-                    id='ticker-dropdown',
-                    multi=True,
-                    placeholder="Search and select tickers",
-                    className="mb-3 dash-dropdown-dark",
-                    persistence=True,
-                    persistence_type='local'
-                ),
-                
-                # Interval Selection
-                html.Label("Interval", className="mb-2"),
-                dcc.Dropdown(
-                    id='interval-dropdown',
-                    options=[
-                        {'label': '1 Day', 'value': '1d'},
-                        {'label': '1 Week', 'value': '1wk'},
-                        {'label': '1 Month', 'value': '1mo'}
-                    ],
-                    value='1d',
-                    className="mb-3 dash-dropdown-dark",
-                    persistence=True,
-                    persistence_type='local'
-                ),
-                
-                # Date Range
-                html.Label("Date Range", className="mb-2"),
-                dcc.DatePickerRange(
-                    id='date-range',
-                    className="mb-3",
-                    display_format='YYYY-MM-DD',
-                    persistence=True,
-                    persistence_type='local'
-                ),
-                
-                # Log Scale Toggle
-                dbc.Switch(
-                    id='log-scale-switch',
-                    label="Logarithmic Scale",
-                    value=False,
-                    className="mb-3",
-                    persistence=True,
-                    persistence_type='local'
-                ),
-                
-                # Normalize Toggle
-                dbc.Switch(
-                    id='normalize-switch',
-                    label="Normalize Prices",
-                    value=False,
-                    className="mb-3",
-                    persistence=True,
-                    persistence_type='local'
-                ),
-                
-                # Update Button
-                dbc.Button(
-                    "Update Data",
-                    id='update-button',
-                    color="primary",
-                    className="w-100 mb-3"
-                )
-            ], width=3, className="p-4", style={
-                "backgroundColor": THEME['sidebar_bg'],
-                "height": "100vh",
-                "overflowY": "auto",
-                "borderRight": f"1px solid {THEME['border']}"
-            }),
-            
-            # Main content
-            dbc.Col([
-                # Chart container
-                html.Div([
-                    dcc.Graph(
-                        id='chart',
-                        style={
-                            "height": "100%",
-                            "width": "100%"
-                        },
-                        config={
-                            'scrollZoom': True,
-                            'showTips': True,
-                            'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
-                            'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                            'displaylogo': False
-                        }
-                    )
-                ], id="chart-container", style={
-                    "position": "relative",
-                    "resize": "both",
-                    "overflow": "hidden",
-                    "minHeight": "400px",
-                    "minWidth": "600px",
-                    "height": "80vh",
-                    "width": "100%",
-                    "margin": "1rem",
-                    "padding": "1rem",
-                    "backgroundColor": THEME['sidebar_bg'],
-                    "borderRadius": "10px",
-                    "border": f"1px solid {THEME['border']}"
-                })
-            ], width=9, className="p-4", style={
-                "backgroundColor": THEME['page_bg'],
-                "height": "100vh",
-                "overflowY": "auto"
-            })
-        ], style={
-            "margin": "0",
-            "height": "100vh"
-        })
-    ], fluid=True, style={
-        "height": "100vh",
-        "padding": "0",
-        "backgroundColor": THEME['page_bg']
-    }),
-    
-    # Settings modal
-    create_settings_modal()
-], id="main-container", style={
-    "height": "100vh",
-    "overflow": "hidden",
-    "backgroundColor": THEME['page_bg']
-})
+                # Settings modal
+                create_settings_modal()
+            ]
+        )
+    ]
+)
 
 # Register callbacks
 register_chart_callbacks(app)
 register_data_callbacks(app)
+register_grid_callbacks(app)
 register_settings_callbacks(app)
 
 if __name__ == '__main__':

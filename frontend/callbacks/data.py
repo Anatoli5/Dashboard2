@@ -65,58 +65,53 @@ def register_data_callbacks(app: Dash) -> None:
     
     @app.callback(
         [
-            Output('date-range', 'min_date_allowed'),
-            Output('date-range', 'max_date_allowed'),
-            Output('date-range', 'start_date'),
-            Output('date-range', 'end_date'),
-            Output('interval-dropdown', 'value'),
-            Output('log-scale-switch', 'value'),
-            Output('normalize-switch', 'value')
+            Output('date-range-start', 'minDate'),
+            Output('date-range-start', 'maxDate'),
+            Output('date-range-end', 'minDate'),
+            Output('date-range-end', 'maxDate')
         ],
-        [Input('ticker-dropdown', 'value')],
         [
-            State('interval-dropdown', 'value'),
-            State('log-scale-switch', 'value'),
-            State('normalize-switch', 'value')
+            Input('interval-dropdown', 'value')
         ]
     )
-    def update_controls(
-        tickers: List[str],
-        current_interval: str,
-        current_log_scale: bool,
-        current_normalize: bool
-    ) -> tuple:
-        """Update controls based on selected tickers and saved state."""
-        if not tickers:
-            raise PreventUpdate
+    def update_date_range(interval):
+        """Update the date range based on the selected interval."""
+        if not interval:
+            return no_update, no_update, no_update, no_update
         
-        # Get saved state or use defaults
-        state = StateManager.load_state()
-        end = datetime.now()
-        start = end - timedelta(days=365)
+        # Calculate min and max dates
+        min_date = datetime.now() - timedelta(days=365)
+        max_date = datetime.now()
         
-        interval = state.get('interval', current_interval or '1d')
-        log_scale = state.get('log_scale', current_log_scale or False)
-        normalize = state.get('normalize', current_normalize or False)
+        # Format dates as strings
+        min_date_str = min_date.strftime('%Y-%m-%d')
+        max_date_str = max_date.strftime('%Y-%m-%d')
         
-        # Try to get saved dates
-        try:
-            if state.get('start_date'):
-                start = datetime.strptime(state['start_date'], '%Y-%m-%d')
-            if state.get('end_date'):
-                end = datetime.strptime(state['end_date'], '%Y-%m-%d')
-        except:
-            pass
+        return min_date_str, max_date_str, min_date_str, max_date_str
+    
+    @app.callback(
+        [
+            Output('chart', 'figure', allow_duplicate=True),
+            Output('data-grid', 'rowData', allow_duplicate=True),
+            Output('info-container', 'children', allow_duplicate=True)
+        ],
+        [
+            Input('update-button', 'n_clicks'),
+            State('ticker-dropdown', 'value'),
+            State('interval-dropdown', 'value'),
+            State('date-range-start', 'value'),
+            State('date-range-end', 'value'),
+            State('log-scale-switch', 'checked'),
+            State('normalize-switch', 'checked')
+        ],
+        prevent_initial_call=True
+    )
+    def update_data(n_clicks, tickers, interval, start_date, end_date, log_scale, normalize):
+        """Update the chart and grid data."""
+        if not n_clicks or not tickers or not interval:
+            return no_update, no_update, no_update
         
-        return (
-            start.date(),
-            end.date(),
-            start.date(),
-            end.date(),
-            interval,
-            log_scale,
-            normalize
-        )
+        # ... rest of the function remains the same ...
     
     @app.callback(
         Output('loading-chart', 'children'),
