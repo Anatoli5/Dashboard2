@@ -28,7 +28,7 @@ app.title = "Financial Dashboard"
 
 # Create theme provider
 theme = {
-    'colorScheme': app_state.get('theme', 'dark'),
+    'colorScheme': 'dark',
     'primaryColor': 'blue',
     'components': {
         'Button': {'styles': {'root': {'fontWeight': 500}}},
@@ -39,8 +39,9 @@ theme = {
 
 app.layout = dmc.MantineProvider(
     theme=theme,
-    withGlobalStyles=True,
+    defaultColorScheme="dark",
     children=[
+        dmc.ColorSchemeScript(defaultColorScheme="dark"),
         dmc.Container(
             fluid=True,
             px=0,

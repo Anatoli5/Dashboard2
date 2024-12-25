@@ -18,24 +18,12 @@ def create_settings_modal():
                         id="theme-select",
                         label="Theme",
                         data=[
-                            {"label": "Dark", "value": "dark"},
-                            {"label": "Light", "value": "light"},
-                            {"label": "Auto", "value": "auto"}
+                            {"value": "light", "label": "Light"},
+                            {"value": "dark", "label": "Dark"},
+                            {"value": "auto", "label": "Auto"}
                         ],
                         value="dark",
-                        persistence=True,
-                        persistence_type='local'
-                    ),
-                    
-                    # Color Palette
-                    dmc.Text("Color Palette", size="sm", fw=500),
-                    dmc.ColorPicker(
-                        id="color-palette",
-                        format="hex",
-                        swatches=["#1c7ed6", "#37b24d", "#f59f00", "#e03131"],
-                        swatchesPerRow=7,
-                        withPicker=True,
-                        fullWidth=True
+                        clearable=False
                     ),
                     
                     # Close Button

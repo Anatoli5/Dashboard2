@@ -1,20 +1,19 @@
 """Settings-related callbacks."""
 
 import json
-from typing import Dict, List
-from dash import Dash, Input, Output, State, ctx
+from typing import Dict, List, Optional
+from dash import Dash, Input, Output, State, ctx, no_update
 import dash_mantine_components as dmc
-from core.state_manager import StateManager
 
 def save_app_state(
-    tickers: List[str] = None,
-    interval: str = None,
-    log_scale: bool = None,
-    normalize: bool = None,
-    start_date: str = None,
-    end_date: str = None,
-    norm_date: str = None,
-    theme: str = None
+    tickers: Optional[List[str]] = None,
+    interval: Optional[str] = None,
+    log_scale: Optional[bool] = None,
+    normalize: Optional[bool] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    norm_date: Optional[str] = None,
+    theme: Optional[str] = None
 ) -> None:
     """Save application state to a file."""
     state = load_app_state()
@@ -36,11 +35,10 @@ def save_app_state(
     if theme is not None:
         state['theme'] = theme
     
-    # Save to file
     with open('app_state.json', 'w') as f:
         json.dump(state, f)
 
-def load_app_state():
+def load_app_state() -> Dict:
     """Load app state from file."""
     try:
         with open('app_state.json', 'r') as f:
@@ -61,12 +59,9 @@ def register_settings_callbacks(app: Dash) -> None:
     )
     def toggle_modal(open_clicks, close_clicks):
         """Toggle the settings modal."""
-        triggered_id = ctx.triggered_id
-        if triggered_id == 'settings-open':
-            return True
-        elif triggered_id == 'settings-close':
-            return False
-        return False
+        if not ctx.triggered_id:
+            return no_update
+        return ctx.triggered_id == "settings-open"
 
     @app.callback(
         Output("theme-select", "value"),
@@ -76,18 +71,21 @@ def register_settings_callbacks(app: Dash) -> None:
     def load_theme_setting(opened):
         """Load the theme setting when modal opens."""
         if not opened:
-            return None
-        app_state = load_app_state()
-        return app_state.get('theme', 'dark')
+            return no_update
+        state = load_app_state()
+        return state.get('theme', 'dark')
 
     @app.callback(
-        Output("theme-select", "value", allow_duplicate=True),
+        [
+            Output("theme-select", "value", allow_duplicate=True),
+            Output(dmc.MantineProvider.ids.colorScheme, "value")
+        ],
         Input("theme-select", "value"),
         prevent_initial_call=True
     )
     def save_theme_setting(theme):
         """Save the theme setting when changed."""
         if theme is None:
-            return 'dark'
+            return 'dark', 'dark'
         save_app_state(theme=theme)
-        return theme 
+        return theme, theme 
