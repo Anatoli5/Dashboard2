@@ -1,15 +1,14 @@
 """Data-related callbacks."""
 
 from typing import Dict, List, Tuple
-import pandas as pd
-from dash import Dash, Input, Output, State, callback_context
-from dash.exceptions import PreventUpdate
 from datetime import datetime, timedelta
+import pandas as pd
+from dash import Dash, Input, Output, State, ctx
+from dash.exceptions import PreventUpdate
 
 from backend.data.manager import DataManager
 from core.ticker_manager import TickerManager
 from core.state_manager import StateManager
-
 
 def register_data_callbacks(app: Dash) -> None:
     """Register data-related callbacks."""
@@ -35,7 +34,6 @@ def register_data_callbacks(app: Dash) -> None:
         current_tickers: List[str]
     ) -> Tuple[List[str], List[Dict]]:
         """Update ticker selection based on category or search."""
-        ctx = callback_context
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
         
         # Initialize ticker state
@@ -70,14 +68,14 @@ def register_data_callbacks(app: Dash) -> None:
             Output('date-range', 'start_date'),
             Output('date-range', 'end_date'),
             Output('interval-dropdown', 'value'),
-            Output('log-scale-switch', 'value'),
-            Output('normalize-switch', 'value')
+            Output('logarithmic-scale', 'value'),
+            Output('normalize-prices', 'value')
         ],
         [Input('ticker-dropdown', 'value')],
         [
             State('interval-dropdown', 'value'),
-            State('log-scale-switch', 'value'),
-            State('normalize-switch', 'value')
+            State('logarithmic-scale', 'value'),
+            State('normalize-prices', 'value')
         ]
     )
     def update_controls(
@@ -128,7 +126,6 @@ def register_data_callbacks(app: Dash) -> None:
     )
     def show_loading(tickers: List[str], interval: str, n_clicks: int) -> str:
         """Show loading spinner when data is being fetched."""
-        ctx = callback_context
         if not ctx.triggered:
             raise PreventUpdate
             

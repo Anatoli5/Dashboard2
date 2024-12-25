@@ -1,93 +1,133 @@
-/* Main container styles */
+/* CSS Variables - injected from themes.py */
+:root {
+    --container-padding: 1rem;
+    --border-radius: 0.5rem;
+}
+
+/* Global container styles */
 .app-container {
-    padding: 1rem;
+    padding: var(--container-padding);
     height: 100vh;
     background-color: var(--bs-body-bg);
 }
 
-/* Sidebar styles */
+/* Layout containers */
+.sidebar,
+.chart-container,
+.info-container {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--container-padding);
+}
+
 .sidebar {
     height: 100%;
-    padding: 1rem;
-    background-color: var(--bs-dark);
-    border-radius: 0.5rem;
-    border: 1px solid var(--bs-border-color);
 }
 
-/* Chart container styles */
 .chart-container {
     height: calc(100vh - 200px);
-    padding: 1rem;
-    background-color: var(--bs-dark);
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--bs-border-color);
+    margin-bottom: var(--container-padding);
+    resize: both;
+    overflow: hidden;
+    min-height: 400px;
+    min-width: 600px;
 }
 
-/* Info container styles */
 .info-container {
     height: 100px;
-    padding: 1rem;
-    background-color: var(--bs-dark);
-    border-radius: 0.5rem;
-    border: 1px solid var(--bs-border-color);
 }
 
-/* Dark Dropdown Theme */
-.dash-dropdown-dark .Select-control {
-    background-color: var(--bs-dark) !important;
-    border-color: var(--bs-border-color) !important;
+/* Dropdown styling */
+.Select-control,
+.Select-menu-outer,
+.dash-dropdown-dark .Select-control,
+.dash-dropdown-dark .Select-menu-outer {
+    background-color: var(--dropdown-bg) !important;
+    border: 1px solid var(--border-color) !important;
     color: var(--bs-body-color) !important;
 }
 
-.dash-dropdown-dark .Select-menu-outer {
-    background-color: var(--bs-dark) !important;
-    border: 1px solid var(--bs-border-color) !important;
-}
-
+.Select-option,
 .dash-dropdown-dark .Select-option {
-    background-color: var(--bs-dark) !important;
+    background-color: var(--dropdown-bg) !important;
     color: var(--bs-body-color) !important;
     cursor: pointer !important;
 }
 
+.Select-option.is-focused,
 .dash-dropdown-dark .Select-option.is-focused {
+    background-color: var(--hover-bg) !important;
+}
+
+.Select-option.is-selected,
+.dash-dropdown-dark .Select-option.is-selected {
     background-color: var(--bs-gray-700) !important;
 }
 
-.dash-dropdown-dark .Select-option.is-selected {
-    background-color: var(--bs-primary) !important;
-}
-
+.Select-value,
 .dash-dropdown-dark .Select-value {
     background-color: var(--bs-dark) !important;
-    border: 1px solid var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--bs-body-color) !important;
 }
 
+.Select-placeholder,
+.dash-dropdown-dark .Select-placeholder {
+    color: var(--bs-gray-700) !important;
+}
+
+.Select-multi-value-wrapper,
+.dash-dropdown-dark .Select-multi-value-wrapper {
+    background-color: var(--dropdown-bg) !important;
+}
+
+.Select-value-label,
 .dash-dropdown-dark .Select-value-label {
     color: var(--bs-body-color) !important;
 }
 
+.Select-value-icon,
 .dash-dropdown-dark .Select-value-icon {
-    border-right: 1px solid var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+    border-right: 1px solid var(--border-color) !important;
 }
 
+.Select-value-icon:hover,
 .dash-dropdown-dark .Select-value-icon:hover {
-    background-color: var(--bs-gray-700) !important;
+    background-color: var(--bs-primary) !important;
     color: var(--bs-body-color) !important;
 }
 
+.Select-input > input,
+.dash-dropdown-dark .Select-input > input {
+    color: var(--bs-body-color) !important;
+}
+
+.Select-arrow-zone,
+.dash-dropdown-dark .Select-arrow-zone {
+    color: var(--bs-gray-700) !important;
+}
+
+.Select-arrow-zone:hover,
+.dash-dropdown-dark .Select-arrow-zone:hover {
+    color: var(--bs-body-color) !important;
+}
+
+.Select-arrow,
 .dash-dropdown-dark .Select-arrow {
-    border-color: var(--bs-border-color) transparent transparent !important;
+    border-color: var(--bs-gray-700) transparent transparent !important;
 }
 
+.is-open .Select-arrow,
 .dash-dropdown-dark .is-open .Select-arrow {
-    border-color: transparent transparent var(--bs-border-color) !important;
+    border-color: transparent transparent var(--bs-gray-700) !important;
 }
 
+.Select.is-focused:not(.is-open) > .Select-control,
 .dash-dropdown-dark .Select.is-focused:not(.is-open) > .Select-control {
     border-color: var(--bs-primary) !important;
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 /* DatePicker styling */
@@ -98,12 +138,52 @@
 .DateInput_input {
     background-color: var(--bs-dark) !important;
     color: var(--bs-body-color) !important;
-    border-color: var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
-.SingleDatePickerInput, .DateRangePickerInput {
+.SingleDatePickerInput,
+.DateRangePickerInput {
     background-color: var(--bs-dark) !important;
-    border-color: var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Calendar styling */
+.CalendarMonth {
+    background-color: var(--bs-dark) !important;
+}
+
+.CalendarMonth_caption {
+    color: var(--bs-body-color) !important;
+}
+
+.CalendarDay {
+    background-color: var(--bs-dark) !important;
+    color: var(--bs-body-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.CalendarDay:hover {
+    background-color: var(--hover-bg) !important;
+    border: 1px solid var(--bs-gray-700) !important;
+}
+
+.CalendarDay__selected {
+    background-color: var(--bs-primary) !important;
+    border: 1px solid var(--bs-primary) !important;
+}
+
+.CalendarDay__selected:hover {
+    background-color: var(--bs-primary) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.DayPickerNavigation_button {
+    background-color: var(--bs-dark) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.DayPickerNavigation_button:hover {
+    background-color: var(--hover-bg) !important;
 }
 
 /* Plotly modebar styling */
@@ -136,7 +216,7 @@
 /* Export button override */
 .modebar-btn[data-title="Download plot as a png"] {
     background: var(--bs-dark) !important;
-    border: 1px solid var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
 .modebar-btn[data-title="Download plot as a png"]:hover {
@@ -148,54 +228,14 @@ label {
     color: var(--bs-body-color) !important;
 }
 
-/* Calendar styling */
-.CalendarMonth {
-    background-color: var(--bs-dark) !important;
-}
-
-.CalendarMonth_caption {
-    color: var(--bs-body-color) !important;
-}
-
-.CalendarDay {
-    background-color: var(--bs-dark) !important;
-    color: var(--bs-body-color) !important;
-    border: 1px solid var(--bs-border-color) !important;
-}
-
-.CalendarDay:hover {
-    background-color: var(--bs-gray-700) !important;
-    border: 1px solid var(--bs-gray-600) !important;
-}
-
-.CalendarDay__selected {
-    background-color: var(--bs-primary) !important;
-    border: 1px solid var(--bs-primary) !important;
-}
-
-.CalendarDay__selected:hover {
-    background-color: var(--bs-primary) !important;
-    color: var(--bs-body-color) !important;
-}
-
-.DayPickerNavigation_button {
-    background-color: var(--bs-dark) !important;
-    border: 1px solid var(--bs-border-color) !important;
-}
-
-.DayPickerNavigation_button:hover {
-    background-color: var(--bs-gray-700) !important;
-}
-
-/* Dash debug menu styling - updated selectors */
+/* Debug menu */
 #_dash-global-error-container {
     background-color: var(--bs-dark) !important;
 }
 
-/* Target the debug menu container */
 div[id*='_dash-app-content'] ._dash-undo-redo {
     background: var(--bs-dark) !important;
-    border: 1px solid var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 4px !important;
     position: fixed !important;
     bottom: 20px !important;
@@ -203,7 +243,6 @@ div[id*='_dash-app-content'] ._dash-undo-redo {
     z-index: 1000 !important;
 }
 
-/* Target the debug menu buttons */
 div[id*='_dash-app-content'] ._dash-undo-redo button {
     background: var(--bs-dark) !important;
     color: var(--bs-body-color) !important;
@@ -213,15 +252,7 @@ div[id*='_dash-app-content'] ._dash-undo-redo button {
     cursor: pointer !important;
 }
 
-/* Target the debug menu buttons on hover */
 div[id*='_dash-app-content'] ._dash-undo-redo button:hover {
-    background: var(--bs-gray-700) !important;
+    background: var(--hover-bg) !important;
     color: var(--bs-primary) !important;
-}
-
-/* Hide the debug menu completely if needed */
-/*
-._dash-undo-redo {
-    display: none !important;
-}
-*/ 
+} 
