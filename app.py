@@ -10,21 +10,27 @@ from frontend.components.chart import create_chart
 from frontend.callbacks.chart import register_chart_callbacks
 from frontend.callbacks.data import register_data_callbacks
 from frontend.callbacks.grid import register_grid_callbacks
-from frontend.callbacks.settings import register_settings_callbacks, load_app_state
+from frontend.callbacks.settings import register_settings_callbacks
+from core.state_manager import StateManager
 from config.settings import TICKER_LISTS
-
-# Load saved state
-app_state = load_app_state()
 
 # Initialize the Dash app
 app = Dash(
     __name__,
     suppress_callback_exceptions=True,
-    update_title=None
+    update_title=None,
+    use_pages=False,
+    external_scripts=[
+        {"src": "https://unpkg.com/react@18/umd/react.development.js"},
+        {"src": "https://unpkg.com/react-dom@18/umd/react-dom.development.js"}
+    ]
 )
 
 # Configure the app
 app.title = "Financial Dashboard"
+
+# Load saved state
+app_state = StateManager.get_full_state()
 
 # Create theme provider
 theme = {
@@ -33,15 +39,20 @@ theme = {
     'components': {
         'Button': {'styles': {'root': {'fontWeight': 500}}},
         'Switch': {'styles': {'root': {'cursor': 'pointer'}}},
-        'Select': {'styles': {'input': {'cursor': 'pointer'}}},
+        'Select': {'styles': {'input': {'cursor': 'pointer'}}}
     }
 }
 
 app.layout = dmc.MantineProvider(
     theme=theme,
-    defaultColorScheme="dark",
+    withGlobalClasses=True,
+    withCssVariables=True,
     children=[
-        dmc.ColorSchemeScript(defaultColorScheme="dark"),
+        html.Link(
+            id="theme-stylesheet",
+            rel="stylesheet",
+            href=f"/assets/css/{app_state.get('theme', 'dark')}.css"
+        ),
         dmc.Container(
             fluid=True,
             px=0,
@@ -103,15 +114,11 @@ app.layout = dmc.MantineProvider(
                                     id='interval-dropdown',
                                     label="Interval",
                                     data=[
-                                        {'label': '1 Minute', 'value': '1min'},
-                                        {'label': '5 Minutes', 'value': '5min'},
-                                        {'label': '15 Minutes', 'value': '15min'},
-                                        {'label': '30 Minutes', 'value': '30min'},
-                                        {'label': '1 Hour', 'value': '1hour'},
-                                        {'label': '4 Hours', 'value': '4hour'},
-                                        {'label': 'Daily', 'value': '1day'}
+                                        {'label': 'Daily', 'value': '1d'},
+                                        {'label': 'Weekly', 'value': '1wk'},
+                                        {'label': 'Monthly', 'value': '1mo'}
                                     ],
-                                    value='1min',
+                                    value='1d',
                                     persistence=True,
                                     persistence_type='local',
                                     mb="md"

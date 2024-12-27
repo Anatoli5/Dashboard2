@@ -51,8 +51,8 @@ def register_chart_callbacks(app: Dash) -> None:
         [
             Input('ticker-dropdown', 'value'),
             Input('interval-dropdown', 'value'),
-            Input('date-range', 'start_date'),
-            Input('date-range', 'end_date'),
+            Input('date-range-start', 'value'),
+            Input('date-range-end', 'value'),
             Input('update-button', 'n_clicks'),
             Input('log-scale-switch', 'value'),
             Input('normalize-switch', 'value'),

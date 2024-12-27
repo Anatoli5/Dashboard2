@@ -18,9 +18,8 @@ def create_settings_modal():
                         id="theme-select",
                         label="Theme",
                         data=[
-                            {"value": "light", "label": "Light"},
-                            {"value": "dark", "label": "Dark"},
-                            {"value": "auto", "label": "Auto"}
+                            {"value": "dark", "label": "Dark Mode"},
+                            {"value": "light", "label": "Light Mode"}
                         ],
                         value="dark",
                         clearable=False
