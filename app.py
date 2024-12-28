@@ -4,12 +4,10 @@ import os
 import json
 from dash import Dash, html, dcc
 import dash_mantine_components as dmc
-from frontend.components.data_grid import create_data_grid
 from frontend.components.settings_modal import create_settings_modal
 from frontend.components.chart import create_chart
 from frontend.callbacks.chart import register_chart_callbacks
 from frontend.callbacks.data import register_data_callbacks
-from frontend.callbacks.grid import register_grid_callbacks
 from frontend.callbacks.settings import register_settings_callbacks
 from core.state_manager import StateManager
 from config.settings import TICKER_LISTS
@@ -32,47 +30,61 @@ app.title = "Financial Dashboard"
 # Load saved state
 app_state = StateManager.get_full_state()
 
-# Create theme provider
+# Create theme provider configuration for v0.12.1
 theme = {
-    'colorScheme': 'dark',
+    'colorScheme': app_state.get('theme', 'dark'),
     'primaryColor': 'blue',
+    'colors': {
+        'dark': [
+            '#C1C2C5',
+            '#A6A7AB',
+            '#909296',
+            '#5C5F66',
+            '#373A40',
+            '#2C2E33',
+            '#25262B',
+            '#1A1B1E',
+            '#141517',
+            '#101113',
+        ],
+    },
     'components': {
-        'Button': {'styles': {'root': {'fontWeight': 500}}},
-        'Switch': {'styles': {'root': {'cursor': 'pointer'}}},
-        'Select': {'styles': {'input': {'cursor': 'pointer'}}}
+        'Button': {'root': {'fontWeight': 500}},
+        'Switch': {'root': {'cursor': 'pointer'}},
+        'Select': {'input': {'cursor': 'pointer'}},
     }
 }
 
 app.layout = dmc.MantineProvider(
     theme=theme,
-    withGlobalClasses=True,
-    withCssVariables=True,
+    inherit=True,
+    withNormalizeCSS=True,
+    withGlobalStyles=True,
     children=[
-        html.Link(
-            id="theme-stylesheet",
-            rel="stylesheet",
-            href=f"/assets/css/{app_state.get('theme', 'dark')}.css"
+        html.Div(
+            id="theme-provider",
+            **{"data-theme": app_state.get('theme', 'dark')},
+            style={'display': 'none'}
         ),
         dmc.Container(
             fluid=True,
             px=0,
             children=[
                 # Main container
-                dmc.SimpleGrid(
-                    cols=2,
+                dmc.Group(
                     spacing="md",
+                    grow=True,
                     children=[
                         # Sidebar
                         dmc.Paper(
                             shadow="sm",
-                            radius="md",
                             p="md",
                             withBorder=True,
                             style={"width": "280px"},
                             children=[
                                 # Header with settings
                                 dmc.Group(
-                                    justify="space-between",
+                                    position="apart",
                                     mb="md",
                                     children=[
                                         dmc.Text("Controls", size="lg", fw=500),
@@ -125,10 +137,10 @@ app.layout = dmc.MantineProvider(
                                 ),
                                 
                                 # Date Range
-                                dmc.Group(
-                                    grow=True,
+                                dmc.Stack(
+                                    spacing="sm",
                                     children=[
-                                        dmc.DatePickerInput(
+                                        dmc.DatePicker(
                                             id='date-range-start',
                                             label="Start Date",
                                             placeholder="Pick start date",
@@ -137,7 +149,7 @@ app.layout = dmc.MantineProvider(
                                             persistence_type='local',
                                             mb="md"
                                         ),
-                                        dmc.DatePickerInput(
+                                        dmc.DatePicker(
                                             id='date-range-end',
                                             label="End Date",
                                             placeholder="Pick end date",
@@ -151,11 +163,11 @@ app.layout = dmc.MantineProvider(
                                 
                                 # Controls
                                 dmc.Stack(
-                                    gap="sm",
+                                    spacing="sm",
                                     mb="md",
                                     children=[
                                         dmc.Group(
-                                            justify="space-between",
+                                            position="apart",
                                             children=[
                                                 dmc.Text("Log Scale"),
                                                 dmc.Switch(
@@ -167,7 +179,7 @@ app.layout = dmc.MantineProvider(
                                             ]
                                         ),
                                         dmc.Group(
-                                            justify="space-between",
+                                            position="apart",
                                             children=[
                                                 dmc.Text("Normalize"),
                                                 dmc.Switch(
@@ -193,46 +205,21 @@ app.layout = dmc.MantineProvider(
                         
                         # Main content
                         dmc.Stack(
-                            gap="md",
+                            spacing="md",
                             style={"flex": 1},
                             children=[
-                                # Tabs for Chart and Grid
-                                dmc.Tabs(
-                                    id="view-tabs",
-                                    value="chart",
-                                    children=[
-                                        dmc.TabsList([
-                                            dmc.TabsTab("Chart", value="chart"),
-                                            dmc.TabsTab("Grid", value="grid")
-                                        ]),
-                                        dmc.TabsPanel(
-                                            value="chart",
-                                            children=dmc.Paper(
-                                                shadow="sm",
-                                                radius="md",
-                                                p="md",
-                                                withBorder=True,
-                                                children=create_chart()
-                                            )
-                                        ),
-                                        dmc.TabsPanel(
-                                            value="grid",
-                                            children=dmc.Paper(
-                                                shadow="sm",
-                                                radius="md",
-                                                p="md",
-                                                withBorder=True,
-                                                children=create_data_grid()
-                                            )
-                                        )
-                                    ]
+                                # Chart container
+                                dmc.Paper(
+                                    shadow="sm",
+                                    p="md",
+                                    withBorder=True,
+                                    children=create_chart()
                                 ),
                                 
                                 # Info container
                                 dmc.Paper(
                                     id='info-container',
                                     shadow="sm",
-                                    radius="md",
                                     p="md",
                                     withBorder=True,
                                     style={'height': '80px'}
@@ -252,7 +239,6 @@ app.layout = dmc.MantineProvider(
 # Register callbacks
 register_chart_callbacks(app)
 register_data_callbacks(app)
-register_grid_callbacks(app)
 register_settings_callbacks(app)
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ def create_settings_modal():
         size="md",
         children=[
             dmc.Stack(
-                gap="md",
+                spacing="md",
                 children=[
                     dmc.Text("Settings", size="lg", fw=500),
                     
@@ -27,7 +27,7 @@ def create_settings_modal():
                     
                     # Close Button
                     dmc.Group(
-                        justify="right",
+                        position="right",
                         children=[
                             dmc.Button(
                                 "Close",
