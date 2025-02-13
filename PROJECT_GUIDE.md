@@ -9,7 +9,7 @@ A financial dashboard designed for real-time tracking and analysis of financial 
 1. Data Tracking & Display
    - Multi-ticker tracking with real-time updates
    - Interactive price charts with customizable parameters
-   - Support for multiple time intervals (daily, weekly, monthly)
+   - Support for multiple time intervals (from 1 hr to one month)
    - Price Normalization:
      - Converts absolute prices to relative performance (percentage basis)
      - There's a normalize-switch in the UI to toggle normalization
@@ -20,12 +20,16 @@ A financial dashboard designed for real-time tracking and analysis of financial 
      - Formula: (current_price / reference_price) * 100
      - Enables direct performance comparison regardless of asset price scales
    - Data normalization and logarithmic scaling capabilities
-
-2. User Customization
    - Theme switching (dark/light modes support)
-   - Customizable chart parameters
-   - Flexible time range selection
+   - Dinamic data range selection(with chart zooming)
+     - performance check: (data range/interval*number of reflected charts) < performance limit
    - Persistent user preferences
+
+2. Tools
+   - Python
+   - SQLlite
+   - Dash
+   - Dash Mantine Components
 
 3. Data Management
    - Multiple data provider support (Yahoo Finance, Alpha Vantage)
@@ -55,18 +59,6 @@ A financial dashboard designed for real-time tracking and analysis of financial 
    - Minimal DOM nesting
    - Smart caching strategies
 
-### Architecture
-
-1. Layer Separation
-   ```
-   UI Layer (Components)
-   ↓
-   State Management Layer
-   ↓
-   Data Processing Layer
-   ↓
-   Data Provider Layer
-   ```
 
 2. State Management
    - File-based persistence
@@ -82,41 +74,7 @@ A financial dashboard designed for real-time tracking and analysis of financial 
 
 ## III. Implementation Guidelines
 
-### Project Structure
-```
-/assets/            # Static assets (root level only)
-    /css/
-        main.css    # Base styles
-        dark.css    # Dark theme
-        light.css   # Light theme
-/frontend/
-    /components/    # UI components
-    /callbacks/     # Event handlers
-    /layouts/       # Page layouts
-/backend/
-    /data/         # Data handling
-    /services/     # Business logic
-/core/             # Core functionality
-    state_manager.py
-    data_manager.py
-/config/           # Configuration
-```
 
-### State Management Implementation
-```python
-class StateManager:
-    _state_file = 'app_state.json'
-    _default_state = {
-        'selected_tickers': [],
-        'interval': '1d',
-        'log_scale': False,
-        'normalize': False,
-        'start_date': None,
-        'end_date': None,
-        'norm_date': None,
-        'theme': 'dark'
-    }
-```
 
 ### Development Guidelines
 
@@ -153,41 +111,8 @@ class StateManager:
 - Important Note: The DatePicker rename to DatePickerInput aligns with upstream Mantine Library. A standalone DatePicker component is planned for future releases.
 - Stability Note: Fewer breaking changes are expected going forward compared to past versions.
 
-### Setup Requirements
-1. React 18 Compatibility
-```python
-app = Dash(
-    __name__,
-    suppress_callback_exceptions=True,
-    update_title=None,
-    external_scripts=[
-        {"src": "https://unpkg.com/react@18/umd/react.development.js"},
-        {"src": "https://unpkg.com/react-dom@18/umd/react-dom.development.js"}
-    ]
-)
-```
 
-2. Theme System Setup
-```python
-theme = {
-    'colorScheme': 'dark',
-    'primaryColor': 'blue',
-    'components': {
-        'Button': {'styles': {'root': {'fontWeight': 500}}},
-        'Switch': {'styles': {'root': {'cursor': 'pointer'}}},
-        'Select': {'styles': {'input': {'cursor': 'pointer'}}}
-    }
-}
-
-app.layout = dmc.MantineProvider(
-    theme=theme,
-    withGlobalClasses=True,
-    withCssVariables=True,
-    children=[...]
-)
-```
-
-### Breaking Changes
+### Breaking Changes for Dash Mantine Components v0.15.0
 
 1. Component Renames
    - `DatePicker` → `DatePickerInput`

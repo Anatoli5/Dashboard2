@@ -1,0 +1,53 @@
+/* Dark theme */
+:root[data-theme="dark"] {
+    --mantine-color-body: #1A1B1E;
+    --mantine-color-text: #C1C2C5;
+    --mantine-color-border: #373A40;
+    --mantine-color-paper: #25262B;
+    --mantine-color-hover: #2C2E33;
+    
+    /* Component colors */
+    --mantine-color-component-bg: var(--mantine-color-paper);
+    --mantine-color-component-text: var(--mantine-color-text);
+    --mantine-color-component-border: var(--mantine-color-border);
+}
+
+/* Dark theme specific styles */
+[data-theme="dark"] .mantine-Paper-root {
+    background-color: var(--mantine-color-paper);
+    color: var(--mantine-color-text);
+    border-color: var(--mantine-color-border);
+}
+
+[data-theme="dark"] .mantine-Text-root {
+    color: var(--mantine-color-text);
+}
+
+[data-theme="dark"] .mantine-Button-root {
+    color: var(--mantine-color-text);
+}
+
+[data-theme="dark"] .mantine-ActionIcon-root {
+    color: var(--mantine-color-text);
+}
+
+[data-theme="dark"] .mantine-Select-input,
+[data-theme="dark"] .mantine-MultiSelect-input {
+    background-color: var(--mantine-color-paper);
+    color: var(--mantine-color-text);
+    border-color: var(--mantine-color-border);
+}
+
+[data-theme="dark"] .mantine-Select-label,
+[data-theme="dark"] .mantine-MultiSelect-label,
+[data-theme="dark"] .mantine-Switch-label {
+    color: var(--mantine-color-text);
+}
+
+[data-theme="dark"] .mantine-Select-item {
+    color: var(--mantine-color-text);
+}
+
+[data-theme="dark"] .mantine-Select-item[data-selected] {
+    background-color: var(--mantine-color-hover);
+} 

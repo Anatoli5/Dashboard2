@@ -1,8 +1,7 @@
 """Main application file."""
 
 import os
-import json
-from dash import Dash, html, dcc
+from dash import Dash
 import dash_mantine_components as dmc
 from frontend.components.settings_modal import create_settings_modal
 from frontend.components.chart import create_chart
@@ -36,22 +35,166 @@ theme = {
     'primaryColor': 'blue',
     'colors': {
         'dark': [
-            '#C1C2C5',
-            '#A6A7AB',
-            '#909296',
-            '#5C5F66',
-            '#373A40',
-            '#2C2E33',
-            '#25262B',
-            '#1A1B1E',
-            '#141517',
-            '#101113',
+            '#C1C2C5',  # 0: Default text
+            '#A6A7AB',  # 1: Dimmed text
+            '#909296',  # 2: Secondary text
+            '#5C5F66',  # 3: Muted text
+            '#373A40',  # 4: Border
+            '#2C2E33',  # 5: Dark background hover
+            '#25262B',  # 6: Dark background
+            '#1A1B1E',  # 7: Paper background
+            '#141517',  # 8: Dark overlay
+            '#101113',  # 9: Darkest background
         ],
+        'light': [
+            '#1A1B1E',  # 0: Default text
+            '#2C2E33',  # 1: Dimmed text
+            '#5C5F66',  # 2: Secondary text
+            '#909296',  # 3: Muted text
+            '#E9ECEF',  # 4: Border
+            '#F1F3F5',  # 5: Light background hover
+            '#F8F9FA',  # 6: Light background
+            '#FFFFFF',  # 7: Paper background
+            '#F8F9FA',  # 8: Light overlay
+            '#FFFFFF',  # 9: Lightest background
+        ]
     },
     'components': {
-        'Button': {'root': {'fontWeight': 500}},
-        'Switch': {'root': {'cursor': 'pointer'}},
-        'Select': {'input': {'cursor': 'pointer'}},
+        'Select': {
+            'styles': {
+                'input': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'color': 'var(--mantine-color-default-0)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'dropdown': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'item': {
+                    'color': 'var(--mantine-color-default-0)',
+                    '&[data-selected]': {
+                        'backgroundColor': 'var(--mantine-color-default-5)',
+                        'color': 'var(--mantine-color-default-0)'
+                    },
+                    '&[data-hovered]': {
+                        'backgroundColor': 'var(--mantine-color-default-5)'
+                    }
+                },
+                'label': {
+                    'color': 'var(--mantine-color-default-0)'
+                }
+            }
+        },
+        'MultiSelect': {
+            'styles': {
+                'input': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'color': 'var(--mantine-color-default-0)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'dropdown': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'item': {
+                    'color': 'var(--mantine-color-default-0)',
+                    '&[data-selected]': {
+                        'backgroundColor': 'var(--mantine-color-default-5)',
+                        'color': 'var(--mantine-color-default-0)'
+                    },
+                    '&[data-hovered]': {
+                        'backgroundColor': 'var(--mantine-color-default-5)'
+                    }
+                },
+                'label': {
+                    'color': 'var(--mantine-color-default-0)'
+                }
+            }
+        },
+        'DatePicker': {
+            'styles': {
+                'input': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'color': 'var(--mantine-color-default-0)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'dropdown': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'label': {
+                    'color': 'var(--mantine-color-default-0)'
+                }
+            }
+        },
+        'Paper': {
+            'styles': {
+                'root': {
+                    'backgroundColor': 'var(--mantine-color-default-6)',
+                    'color': 'var(--mantine-color-default-0)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                }
+            }
+        },
+        'Text': {
+            'styles': {
+                'root': {
+                    'color': 'var(--mantine-color-default-0)'
+                }
+            }
+        },
+        'ActionIcon': {
+            'styles': {
+                'root': {
+                    'color': 'var(--mantine-color-default-0)',
+                    '&:hover': {
+                        'backgroundColor': 'var(--mantine-color-default-5)'
+                    }
+                }
+            }
+        },
+        'Switch': {
+            'styles': {
+                'root': {
+                    'label': {
+                        'color': 'var(--mantine-color-default-0)'
+                    }
+                },
+                'track': {
+                    'backgroundColor': 'var(--mantine-color-default-4)',
+                    'borderColor': 'var(--mantine-color-default-4)'
+                },
+                'thumb': {
+                    'backgroundColor': 'var(--mantine-color-default-0)'
+                }
+            }
+        },
+        'Button': {
+            'styles': {
+                'root': {
+                    'backgroundColor': 'var(--mantine-color-blue-6)',
+                    'color': 'var(--mantine-color-default-0)',
+                    '&:hover': {
+                        'backgroundColor': 'var(--mantine-color-blue-7)'
+                    }
+                }
+            }
+        },
+        'Group': {
+            'styles': {
+                'root': {
+                    'backgroundColor': 'transparent'
+                }
+            }
+        },
+        'Stack': {
+            'styles': {
+                'root': {
+                    'backgroundColor': 'transparent'
+                }
+            }
+        }
     }
 }
 
@@ -60,12 +203,8 @@ app.layout = dmc.MantineProvider(
     inherit=True,
     withNormalizeCSS=True,
     withGlobalStyles=True,
+    id="mantine-provider",
     children=[
-        html.Div(
-            id="theme-provider",
-            **{"data-theme": app_state.get('theme', 'dark')},
-            style={'display': 'none'}
-        ),
         dmc.Container(
             fluid=True,
             px=0,
@@ -222,7 +361,7 @@ app.layout = dmc.MantineProvider(
                                     shadow="sm",
                                     p="md",
                                     withBorder=True,
-                                    style={'height': '80px'}
+                                    style={"height": "80px"}
                                 )
                             ]
                         )

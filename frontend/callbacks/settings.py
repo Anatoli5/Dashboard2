@@ -1,7 +1,7 @@
 """Settings-related callbacks."""
 
 from typing import Dict, List, Optional
-from dash import Dash, Input, Output, State, ctx, no_update, clientside_callback
+from dash import Dash, Input, Output, State, ctx, no_update
 import dash_mantine_components as dmc
 from core.state_manager import StateManager
 
@@ -31,27 +31,22 @@ def register_settings_callbacks(app: Dash) -> None:
         return StateManager.get_state('theme', 'dark')
 
     @app.callback(
-        Output("theme-select", "value", allow_duplicate=True),
+        [
+            Output("theme-select", "value", allow_duplicate=True),
+            Output("mantine-provider", "theme")
+        ],
         Input("theme-select", "value"),
+        State("mantine-provider", "theme"),
         prevent_initial_call=True
     )
-    def save_theme_setting(theme):
-        """Save the theme setting."""
+    def save_theme_setting(theme, current_theme):
+        """Save the theme setting and update provider theme."""
         if theme is None:
             theme = 'dark'
         StateManager.set_state('theme', theme)
-        return theme
-
-    # Client-side callback for theme switching
-    clientside_callback(
-        """
-        function(theme) {
-            if (!theme) return dash_clientside.no_update;
-            document.documentElement.setAttribute('data-mantine-color-scheme', theme);
-            return dash_clientside.no_update;
-        }
-        """,
-        Output("theme-provider", "data-theme"),
-        Input("theme-select", "value"),
-        prevent_initial_call=True
-    ) 
+        
+        # Update theme while preserving other settings
+        new_theme = current_theme.copy() if current_theme else {}
+        new_theme['colorScheme'] = theme
+        
+        return theme, new_theme 

@@ -11,7 +11,6 @@ from dash.exceptions import PreventUpdate
 from backend.data.manager import DataManager
 from core.ticker_manager import TickerManager
 from core.state_manager import StateManager
-from config.settings import THEME
 
 
 def normalize_data(df: pd.DataFrame, click_point: Dict = None) -> pd.DataFrame:
@@ -49,6 +48,7 @@ def register_chart_callbacks(app: Dash) -> None:
     @app.callback(
         Output('chart', 'figure'),
         [
+            Input('mantine-provider', 'theme'),
             Input('ticker-dropdown', 'value'),
             Input('interval-dropdown', 'value'),
             Input('date-range-start', 'value'),
@@ -58,9 +58,10 @@ def register_chart_callbacks(app: Dash) -> None:
             Input('normalize-switch', 'value'),
             Input('chart', 'clickData')
         ],
-        [State('chart', 'figure')]
+        State('chart', 'figure')
     )
     def update_chart(
+        theme,
         tickers: List[str],
         interval: str,
         start_date: str,
@@ -74,6 +75,10 @@ def register_chart_callbacks(app: Dash) -> None:
         """Update the price chart."""
         ctx = callback_context
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+        
+        # Get current color scheme
+        color_scheme = theme.get('colorScheme', 'dark')
+        colors = theme.get('colors', {}).get(color_scheme, [])
         
         # Save current settings to state
         if triggered_id not in ['chart']:
@@ -94,15 +99,23 @@ def register_chart_callbacks(app: Dash) -> None:
                         'text': 'Select tickers to display',
                         'x': 0.5,
                         'xanchor': 'center',
-                        'font': {'color': THEME['text_primary']}
+                        'font': {'color': f'var(--mantine-color-{color_scheme}-0)'}
                     },
                     'showlegend': True,
-                    'template': 'plotly_dark',
-                    'xaxis': {'showgrid': True, 'gridcolor': THEME['grid']},
-                    'yaxis': {'showgrid': True, 'gridcolor': THEME['grid']},
-                    'paper_bgcolor': THEME['chart_outer_bg'],
-                    'plot_bgcolor': THEME['chart_inner_bg'],
-                    'font': {'color': THEME['text_primary']},
+                    'template': 'plotly_dark' if color_scheme == 'dark' else 'plotly_white',
+                    'xaxis': {
+                        'showgrid': True,
+                        'gridcolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
+                    },
+                    'yaxis': {
+                        'showgrid': True,
+                        'gridcolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
+                    },
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': {'color': f'var(--mantine-color-{color_scheme}-0)'},
                     'annotations': [{
                         'text': 'Use the controls on the left to select tickers',
                         'xref': 'paper',
@@ -110,7 +123,10 @@ def register_chart_callbacks(app: Dash) -> None:
                         'x': 0.5,
                         'y': 0.5,
                         'showarrow': False,
-                        'font': {'size': 16, 'color': THEME['text_primary']}
+                        'font': {
+                            'size': 16,
+                            'color': f'var(--mantine-color-{color_scheme}-0)'
+                        }
                     }]
                 }
             }
@@ -145,7 +161,7 @@ def register_chart_callbacks(app: Dash) -> None:
             traces = []
             for i, (ticker, df) in enumerate(ticker_data.items()):
                 if not df.empty:
-                    color = THEME['chart_colors'][i % len(THEME['chart_colors'])]
+                    color = f'var(--mantine-color-blue-{(i % 3 + 4)})'  # Use blue shades 4-6
                     # Get the close prices
                     close_prices = df['close']
                     
@@ -170,10 +186,10 @@ def register_chart_callbacks(app: Dash) -> None:
                                 "<extra></extra>"
                             ),
                             hoverlabel=dict(
-                                bgcolor=THEME['hover_bg'],
+                                bgcolor=f'var(--mantine-color-{color_scheme}-6)',
                                 bordercolor=color,
                                 font=dict(
-                                    color=THEME['text_primary'],
+                                    color=f'var(--mantine-color-{color_scheme}-0)',
                                     size=13
                                 )
                             )
@@ -196,78 +212,16 @@ def register_chart_callbacks(app: Dash) -> None:
                                 "<extra></extra>"
                             ),
                             hoverlabel=dict(
-                                bgcolor=THEME['hover_bg'],
+                                bgcolor=f'var(--mantine-color-{color_scheme}-6)',
                                 bordercolor=color,
                                 font=dict(
-                                    color=THEME['text_primary'],
+                                    color=f'var(--mantine-color-{color_scheme}-0)',
                                     size=13
                                 )
                             ),
                             visible='legendonly'
                         )
                     )
-            
-            if not traces:
-                return {
-                    'data': [],
-                    'layout': {
-                        'title': {
-                            'text': 'No data available for selected tickers',
-                            'x': 0.5,
-                            'xanchor': 'center',
-                            'font': {'color': THEME['text_primary']}
-                        },
-                        'showlegend': True,
-                        'template': 'plotly_dark',
-                        'xaxis': {
-                            'title': 'Date',
-                            'rangeslider': {'visible': False},
-                            'showgrid': True,
-                            'gridcolor': THEME['grid'],
-                            'domain': [0, 1],
-                            'color': THEME['text_primary']
-                        },
-                        'yaxis': {
-                            'title': 'Normalized Price (%)' if normalize else 'Price',
-                            'showgrid': True,
-                            'gridcolor': THEME['grid'],
-                            'type': 'log' if log_scale else 'linear',
-                            'side': 'left',
-                            'color': THEME['text_primary']
-                        },
-                        'yaxis2': {
-                            'title': 'Volume',
-                            'showgrid': False,
-                            'side': 'right',
-                            'overlaying': 'y',
-                            'color': THEME['text_primary']
-                        },
-                        'paper_bgcolor': THEME['chart_outer_bg'],
-                        'plot_bgcolor': THEME['chart_inner_bg'],
-                        'font': {'color': THEME['text_primary']},
-                        'hovermode': 'closest',
-                        'hoverdistance': 50,
-                        'hoverlabel': {
-                            'bgcolor': THEME['hover_bg'],
-                            'font': {'size': 13},
-                            'align': 'right',
-                            'namelength': -1
-                        },
-                        'dragmode': 'zoom',
-                        'modebar': {
-                            'bgcolor': 'rgba(0,0,0,0)',
-                            'color': THEME['text_primary'],
-                            'activecolor': THEME['text_primary']
-                        },
-                        'legend': {
-                            'bgcolor': 'rgba(0,0,0,0)',
-                            'font': {'color': THEME['text_primary']},
-                            'bordercolor': THEME['border'],
-                            'borderwidth': 1
-                        },
-                        'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
-                    }
-                }
             
             # Create figure
             figure = {
@@ -277,40 +231,46 @@ def register_chart_callbacks(app: Dash) -> None:
                         'text': 'Normalized Price Chart (Click to change base point)' if normalize else 'Price Chart',
                         'x': 0.5,
                         'xanchor': 'center',
-                        'font': {'color': THEME['text_primary']}
+                        'font': {'color': f'var(--mantine-color-{color_scheme}-0)'}
                     },
                     'showlegend': True,
-                    'template': 'plotly_dark',
+                    'template': 'plotly_dark' if color_scheme == 'dark' else 'plotly_white',
                     'xaxis': {
                         'title': 'Date',
                         'rangeslider': {'visible': False},
                         'showgrid': True,
-                        'gridcolor': THEME['grid'],
+                        'gridcolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'linecolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'tickcolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'zerolinecolor': f'var(--mantine-color-{color_scheme}-4)',
                         'domain': [0, 1],
-                        'color': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
                     },
                     'yaxis': {
                         'title': 'Normalized Price (%)' if normalize else 'Price',
                         'showgrid': True,
-                        'gridcolor': THEME['grid'],
+                        'gridcolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'linecolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'tickcolor': f'var(--mantine-color-{color_scheme}-4)',
+                        'zerolinecolor': f'var(--mantine-color-{color_scheme}-4)',
                         'type': 'log' if log_scale else 'linear',
                         'side': 'left',
-                        'color': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
                     },
                     'yaxis2': {
                         'title': 'Volume',
                         'showgrid': False,
                         'side': 'right',
                         'overlaying': 'y',
-                        'color': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
                     },
-                    'paper_bgcolor': THEME['chart_outer_bg'],
-                    'plot_bgcolor': THEME['chart_inner_bg'],
-                    'font': {'color': THEME['text_primary']},
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': {'color': f'var(--mantine-color-{color_scheme}-0)'},
                     'hovermode': 'closest',
                     'hoverdistance': 50,
                     'hoverlabel': {
-                        'bgcolor': THEME['hover_bg'],
+                        'bgcolor': f'var(--mantine-color-{color_scheme}-6)',
                         'font': {'size': 13},
                         'align': 'right',
                         'namelength': -1
@@ -318,13 +278,13 @@ def register_chart_callbacks(app: Dash) -> None:
                     'dragmode': 'zoom',
                     'modebar': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'color': THEME['text_primary'],
-                        'activecolor': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)',
+                        'activecolor': f'var(--mantine-color-{color_scheme}-0)'
                     },
                     'legend': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'font': {'color': THEME['text_primary']},
-                        'bordercolor': THEME['border'],
+                        'font': {'color': f'var(--mantine-color-{color_scheme}-0)'},
+                        'bordercolor': f'var(--mantine-color-{color_scheme}-4)',
                         'borderwidth': 1
                     },
                     'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
@@ -342,40 +302,40 @@ def register_chart_callbacks(app: Dash) -> None:
                         'text': f'Error: {str(e)}',
                         'x': 0.5,
                         'xanchor': 'center',
-                        'font': {'color': THEME['text_primary']}
+                        'font': {'color': f'var(--mantine-color-{color_scheme}-0)'}
                     },
                     'showlegend': True,
-                    'template': 'plotly_dark',
+                    'template': 'plotly_dark' if color_scheme == 'dark' else 'plotly_white',
                     'xaxis': {
                         'title': 'Date',
                         'rangeslider': {'visible': False},
                         'showgrid': True,
-                        'gridcolor': THEME['grid'],
+                        'gridcolor': f'var(--mantine-color-{color_scheme}-4)',
                         'domain': [0, 1],
-                        'color': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
                     },
                     'yaxis': {
                         'title': 'Normalized Price (%)' if normalize else 'Price',
                         'showgrid': True,
-                        'gridcolor': THEME['grid'],
+                        'gridcolor': f'var(--mantine-color-{color_scheme}-4)',
                         'type': 'log' if log_scale else 'linear',
                         'side': 'left',
-                        'color': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
                     },
                     'yaxis2': {
                         'title': 'Volume',
                         'showgrid': False,
                         'side': 'right',
                         'overlaying': 'y',
-                        'color': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)'
                     },
-                    'paper_bgcolor': THEME['chart_outer_bg'],
-                    'plot_bgcolor': THEME['chart_inner_bg'],
-                    'font': {'color': THEME['text_primary']},
+                    'paper_bgcolor': 'rgba(0,0,0,0)',
+                    'plot_bgcolor': 'rgba(0,0,0,0)',
+                    'font': {'color': f'var(--mantine-color-{color_scheme}-0)'},
                     'hovermode': 'closest',
                     'hoverdistance': 50,
                     'hoverlabel': {
-                        'bgcolor': THEME['hover_bg'],
+                        'bgcolor': f'var(--mantine-color-{color_scheme}-6)',
                         'font': {'size': 13},
                         'align': 'right',
                         'namelength': -1
@@ -383,13 +343,13 @@ def register_chart_callbacks(app: Dash) -> None:
                     'dragmode': 'zoom',
                     'modebar': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'color': THEME['text_primary'],
-                        'activecolor': THEME['text_primary']
+                        'color': f'var(--mantine-color-{color_scheme}-0)',
+                        'activecolor': f'var(--mantine-color-{color_scheme}-0)'
                     },
                     'legend': {
                         'bgcolor': 'rgba(0,0,0,0)',
-                        'font': {'color': THEME['text_primary']},
-                        'bordercolor': THEME['border'],
+                        'font': {'color': f'var(--mantine-color-{color_scheme}-0)'},
+                        'bordercolor': f'var(--mantine-color-{color_scheme}-4)',
                         'borderwidth': 1
                     },
                     'margin': {'l': 60, 'r': 60, 't': 50, 'b': 50}
